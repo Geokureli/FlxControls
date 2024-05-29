@@ -181,6 +181,16 @@ class FlxControlList<TAction:EnumValue>
         return get(action).check();
     }
     
+    public function any(actions:Array<TAction>)
+    {
+        for (action in actions)
+        {
+            if (get(action).check())
+                return true;
+        }
+        return false;
+    }
+    
     inline function addMapping(action:TAction)
     {
         return mappings[action] = new FlxControlDigital('${parent.name}:${action.getName()}-$status');
