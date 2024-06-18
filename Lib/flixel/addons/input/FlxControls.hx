@@ -17,17 +17,29 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionSet
 {
     static final all_states:ReadOnlyArray<FlxInputState> = [PRESSED, RELEASED, JUST_PRESSED, JUST_RELEASED];
     
-    public var pressed     (get, never):FlxControlList<TAction>;
-    public var released    (get, never):FlxControlList<TAction>;
-    public var justPressed (get, never):FlxControlList<TAction>;
-    public var justReleased(get, never):FlxControlList<TAction>;
+    var pressedList     (get, never):FlxControlList<TAction>;
+    var releasedList    (get, never):FlxControlList<TAction>;
+    var justPressedList (get, never):FlxControlList<TAction>;
+    var justReleasedList(get, never):FlxControlList<TAction>;
     
-    inline function get_pressed     () { return byStatus[PRESSED      ]; }
-    inline function get_released    () { return byStatus[RELEASED     ]; }
-    inline function get_justPressed () { return byStatus[JUST_PRESSED ]; }
-    inline function get_justReleased() { return byStatus[JUST_RELEASED]; }
+    inline function get_pressedList     () { return byStatus[PRESSED      ]; }
+    inline function get_releasedList    () { return byStatus[RELEASED     ]; }
+    inline function get_justPressedList () { return byStatus[JUST_PRESSED ]; }
+    inline function get_justReleasedList() { return byStatus[JUST_RELEASED]; }
+    
+    inline public function pressed     (action:TAction) { return pressedList     .check(action); }
+    inline public function released    (action:TAction) { return releasedList    .check(action); }
+    inline public function justPressed (action:TAction) { return justPressedList .check(action); }
+    inline public function justReleased(action:TAction) { return justReleasedList.check(action); }
+    
+    inline public function anyPressed     (actions:Array<TAction>) { return pressedList     .any(actions); }
+    inline public function anyReleased    (actions:Array<TAction>) { return releasedList    .any(actions); }
+    inline public function anyJustPressed (actions:Array<TAction>) { return justPressedList .any(actions); }
+    inline public function anyJustReleased(actions:Array<TAction>) { return justReleasedList.any(actions); }
     
     var byStatus = new Map<FlxInputState, FlxControlList<TAction>>();
+    
+    var groups:Array<Array<TAction>> = [];
     
     public function new (name:String)
     {
@@ -132,8 +144,12 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionSet
     }
 }
 
+
+// @:genericBuild(flixel.addons.system.macros.FlxControlsMacro.generateControlFields())
+class FlxControlList<TAction:EnumValue> extends FlxControlListBase<TAction> {}
+
 @:allow(flixel.addons.input.FlxControls)
-class FlxControlList<TAction:EnumValue>
+class FlxControlListBase<TAction:EnumValue>
 {
     final status:FlxInputState;
     var parent:FlxControls<TAction>;
@@ -238,7 +254,7 @@ class FlxControlList<TAction:EnumValue>
 }
 
 
-@:allow(flixel.addons.input.FlxControlList)
+@:allow(flixel.addons.input.FlxControlListBase)
 abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
 {
     function new (name, ?callback)
