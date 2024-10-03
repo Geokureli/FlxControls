@@ -101,9 +101,9 @@ class FlxControlsMacro
         }).fields;
     }
     
-    static function buildActionList(enumType:EnumType):ComplexType
+    static function buildActionList(action:EnumType):ComplexType
     {
-        final name = 'FlxControlList__${enumType.pack.join("_")}_${enumType.name}';
+        final name = 'FlxControlList__${action.pack.join("_")}_${action.name}';
         
         // Check whether the generated type already exists
         try
@@ -115,26 +115,24 @@ class FlxControlsMacro
         }
         catch (e) {} // The generated type doesn't exist yet
         
-        // get full path to enum
-        final fullEnumPath = enumType.module.split(".");
-        fullEnumPath.push(enumType.name);
+        // get full path to action enum
+        final actionPath = action.module.split(".");
+        actionPath.push(action.name);
         
-        final enumCT = Context.getType(fullEnumPath.join(".")).toComplexType();
-        final baseTP:TypePath =
-        {
+        final actionCT = Context.getType(actionPath.join(".")).toComplexType();
+        // define the type
+        final def = macro class $name { }
+        def.kind = TDClass
+        ({
             pack: ["flixel", "addons", "input"],
             name: "FlxControls",
             sub:"FlxControlList",
-            params: [TPType(enumCT)]
-        };
+            params: [TPType(actionCT)]
+        });
         
-        // define the type
-        final def = macro class $name { }
-        def.kind = TDClass(baseTP);
-        
-        for (name in enumType.names)
+        for (name in action.names)
         {
-            final fields = createGetter(name, fullEnumPath);
+            final fields = createGetter(name, actionPath);
             def.fields.push(fields[0]);
             def.fields.push(fields[1]);
         }
@@ -143,10 +141,10 @@ class FlxControlsMacro
         return TPath({pack: [], name: name});
     }
     
-    static function createGetter(name:String, enumPath:Array<String>):Array<Field>
+    static function createGetter(name:String, actionPath:Array<String>):Array<Field>
     {
         final getterName = 'get_$name';
-        final path = enumPath.copy();
+        final path = actionPath.copy();
         path.push(name);
         return (macro class TempClass
         {
