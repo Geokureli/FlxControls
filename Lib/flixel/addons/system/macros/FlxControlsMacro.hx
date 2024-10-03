@@ -1,78 +1,158 @@
 package flixel.addons.system.macros;
 
+import flixel.input.FlxInput;
 import haxe.macro.Expr;
 import haxe.macro.Context;
 import haxe.macro.Type;
 
+using haxe.macro.Tools;
 using haxe.macro.TypeTools;
 
 class FlxControlsMacro
 {
-    static public function buildControlList(type:ClassType, param:BaseType):ComplexType
+    public static function buildControls():Array<Field>
+    {   
+        try
+        {
+            return buildControlsUnsafe();
+        }
+        catch(e)
+        {
+            Context.error(e.message, Context.currentPos());
+        }
+        
+        return Context.getBuildFields();
+    }
+    
+    public static function buildControlsUnsafe():Array<Field>
     {
-        // generate new type extending the given type
-        final typeName = '${type.name}';
-        final name = '${typeName}_${param.name}';
-        final complexType = Context.getType(param.name).toComplexType();
+        final fields = Context.getBuildFields();
         
-        // generate new type
-        final newType = macro class $name extends flixel.addons.input.FlxControlListBase<$complexType>
-            {
-                public function new() { super(); }
-            };
+        return switch Context.getLocalType()
+        {
+            // Extract the type parameter
+            case TInst(local, _):
+                
+                final action = getAction(local.get());
+                if (action == null)
+                {
+                    // Don't generate fields if actions is a type param
+                    return fields;
+                }
+                
+                final newFields = buildControlsFields(action);
+                for (newField in newFields)
+                    fields.push(newField);
+                
+                fields;
+            case found:
+                throw 'Expected TInst, found: $found';
+        }
+    }
+    
+    static function getAction(local:ClassType):EnumType
+    {
+        var superClass = local.superClass;
+        do
+        {
+            if (superClass == null || superClass.t.get() == null)
+                throw "class must extend flixel.addons.input.FlxControls";
+            
+            if (superClass.t.get().name != "flixel.addons.input.FlxControls")
+                break;
+            
+            superClass = superClass.t.get().superClass;
+        }
+        while (true);
         
-        newType.pos = Context.currentPos();
+        return switch superClass.params
+        {
+            case [param]:
+                switch param.follow()
+                {
+                    case TInst(_, _):
+                        null;// No actual enum found (likely a type param)
+                    case TEnum(type, []):
+                        type.get();
+                    case TEnum(t, params):
+                        throw "Enums with type params are not allowed";
+                    case found:
+                        throw 'T must be an Enum type, found: $found';
+                }
+            case found:
+                throw 'Expected <T:EnumValue>, found: $found';
+        }
+    }
+    
+    static function buildControlsFields(enumType:EnumType):Array<Field>
+    {
+        final listCT = buildActionList(enumType);
+        return (macro class TempClass
+        {
+            public var pressed     (get, never):$listCT;
+            public var released    (get, never):$listCT;
+            public var justPressed (get, never):$listCT;
+            public var justReleased(get, never):$listCT;
+            
+            @:noCompletion inline function get_pressed     () { return cast byStatus[$v{FlxInputState.PRESSED      }]; }
+            @:noCompletion inline function get_released    () { return cast byStatus[$v{FlxInputState.RELEASED     }]; }
+            @:noCompletion inline function get_justPressed () { return cast byStatus[$v{FlxInputState.JUST_PRESSED }]; }
+            @:noCompletion inline function get_justReleased() { return cast byStatus[$v{FlxInputState.JUST_RELEASED}]; }
+        }).fields;
+    }
+    
+    static function buildActionList(enumType:EnumType):ComplexType
+    {
+        final name = 'FlxControlList__${enumType.pack.join("_")}_${enumType.name}';
         
-        Context.defineType(newType, type.module);
+        // Check whether the generated type already exists
+        try
+        {
+            Context.getType(name);
+            
+            // Return a `ComplexType` for the generated type
+            return TPath({pack: [], name: name});
+        }
+        catch (e) {} // The generated type doesn't exist yet
         
+        // get full path to enum
+        final fullEnumPath = enumType.module.split(".");
+        fullEnumPath.push(enumType.name);
+        
+        final enumCT = Context.getType(fullEnumPath.join(".")).toComplexType();
+        final baseTP:TypePath =
+        {
+            pack: ["flixel", "addons", "input"],
+            name: "FlxControls",
+            sub:"FlxControlList",
+            params: [TPType(enumCT)]
+        };
+        
+        // define the type
+        final def = macro class $name { }
+        def.kind = TDClass(baseTP);
+        
+        for (name in enumType.names)
+        {
+            final fields = createGetter(name, fullEnumPath);
+            def.fields.push(fields[0]);
+            def.fields.push(fields[1]);
+        }
+        
+        Context.defineType(def);
         return TPath({pack: [], name: name});
     }
     
-    static public function generateControlFields():ComplexType
+    static function createGetter(name:String, enumPath:Array<String>):Array<Field>
     {
-        trace('local: ${Context.getLocalType()}');
-        switch (Context.getLocalType())
+        final getterName = 'get_$name';
+        final path = enumPath.copy();
+        path.push(name);
+        return (macro class TempClass
         {
-            case TInst(type, [TEnum(param, [])]):
-                trace('enum param: $param');
-                return buildControlList(type.get(), param.get());
-            case TInst(type, [TInst(param, [])]):
-                trace('inst param: $param');
-                return buildControlList(type.get(), param.get());
-            case TInst(type, [found]):
-                return buildControlList(type.get(), param.get());
-                throw 'Expecting EnumValue type param, found $found';
-            case TInst(type, _):
-                throw 'Expecting single EnumValue type param, found multiple';
-            case _:
-                throw "D'oh!";
-        }
+            public var $name(get, never):Bool;
+            @:noCompletion
+            inline function $getterName () { return check($p{path}); }
+        }).fields;
     }
-    
-    
-    static public function buildSpecial()
-    {
-        switch (Context.getLocalType())
-        {
-            case TInst(type, [t1]):
-                switch t1.follow()
-                {
-                    case TEnum(param, []):
-                        trace(' enum: $param');
-                        final paramName = param.get().name;
-                        final paramType = Context.getType(paramName);
-                        return buildType(type.get(), paramName, paramType);
-                        case TAnonymous(_.get() => t):
-                            trace(t);
-                            // trace(t1);
-                            
-                            throw "D'oh!";
-                        case TInst(type, []):
-                            trace(type.follow());
-                        }
-                        case _:
-                    trace(Context.getLocalType());
-                            throw "D'oh!";
-                }
-        }
 }
