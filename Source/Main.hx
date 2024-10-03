@@ -50,5 +50,3 @@ class BootState extends flixel.FlxState
             controls.addKey(PAUSE, ENTER);
     }
 }
-
-typedef ActionTD = Action;
