@@ -1,5 +1,6 @@
 package ;
 
+import flixel.ui.FlxVirtualPad;
 import flixel.FlxG;
 import input.Controls;
 
@@ -16,15 +17,17 @@ class Main extends openfl.display.Sprite
 class BootState extends flixel.FlxState
 {
     var controls:Controls;
+    var pad:FlxVirtualPad;
+    
     override function create()
     {
         super.create();
-        
+    }
+    
+    function initControls()
+    {
         controls = new Controls("test");
-        
-        // Check whether each action input is pressed
-        for (action in Action.createAll())
-            FlxG.watch.addFunction(action.getName(), ()->controls.pressed.check(action));
+        FlxG.inputs.addInput(controls);
         
         // Can also check using helper properties generated for each action
         FlxG.watch.addFunction("up"    , ()->controls.pressed.UP    );
@@ -40,13 +43,30 @@ class BootState extends flixel.FlxState
         // Check if multiple actions are pressed like so:
         FlxG.watch.addFunction("l/r"   , ()->controls.pressed.any([LEFT, RIGHT]));
         FlxG.watch.addFunction("u/d"   , ()->controls.pressed.any([UP, DOWN]));
+        
+        controls.CAMERA_MOVE.addGamepad(LEFT_ANALOG_STICK);
+        FlxG.watch.addFunction("move"   , function ()
+        {
+            final p = controls.CAMERA_MOVE;
+            return '${p.x} | ${p.y}';
+        });
+        
+        add(pad = new FlxVirtualPad(FULL, A_B_X_Y));
     }
     
     override function update(elapsed:Float)
     {
         super.update(elapsed);
         
-        if (FlxG.keys.justPressed.SPACE)
-            controls.addKey(PAUSE, ENTER);
+        if (controls == null)
+        {
+            // if (FlxG.gamepads.getFirstActiveGamepad() != null)
+                initControls();
+        }
+        else
+        {
+            if (FlxG.keys.justPressed.SPACE)
+                controls.addKey(PAUSE, ENTER);
+        }
     }
 }

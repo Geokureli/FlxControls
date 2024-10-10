@@ -1,0 +1,11 @@
+{   "search.exclude": 
+    { "*/export/": true
+    }
+,   "haxecheckstyle.sourceFolders":
+    [ "source"
+    , "../../lib"
+    , "../../../../lib/flixel"
+    , "../../../../lib/flixel/tests/coverage/source"
+    , "../../../../lib/flixel/tests/unit/src"
+    ]
+}
