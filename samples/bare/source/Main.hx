@@ -44,10 +44,10 @@ class BootState extends flixel.FlxState
         FlxG.watch.addFunction("l/r"   , ()->controls.pressed.any([LEFT, RIGHT]));
         FlxG.watch.addFunction("u/d"   , ()->controls.pressed.any([UP, DOWN]));
         
-        controls.CAMERA_MOVE.addGamepad(LEFT_ANALOG_STICK);
         FlxG.watch.addFunction("move"   , function ()
         {
-            final p = controls.CAMERA_MOVE;
+            final p = controls.MOVE;
+            // return '${p.x} | ${p.y}';
             return '${p.x} | ${p.y}';
         });
         

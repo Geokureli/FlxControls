@@ -75,15 +75,6 @@ enum Action
 
 class Controls extends flixel.addons.input.FlxControls<Action>
 {
-    public var CAMERA_MOVE(default, null):FlxControlAnalogStick;
-    
-    public function new (name)
-    {
-        super(name);
-        
-        addAction(CAMERA_MOVE = new FlxControlAnalogStick("camera_move"));
-    }
-    
     function getDefaultKeyMappings()
     {
         return

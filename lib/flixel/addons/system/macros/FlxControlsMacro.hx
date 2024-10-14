@@ -90,35 +90,44 @@ class FlxControlsMacro
     
     static function buildControlsFields(enumType:EnumType):Array<Field>
     {
-        final enumFields = ActionFieldData.listFromType(enumType);
+        final enumDataList = ActionFieldData.listFromType(enumType);
         
         // Digital fields
-        final listCT = buildDigitalActionList(enumType, enumFields);
-        return (macro class TempClass
+        final listCT = buildDigitalActionList(enumType, enumDataList);
+        final fields = (macro class TempClass
         {
             public var pressed     (get, never):$listCT;
             public var released    (get, never):$listCT;
             public var justPressed (get, never):$listCT;
             public var justReleased(get, never):$listCT;
             
-            @:noCompletion inline function get_pressed     () { return cast byStatus[$v{FlxInputState.PRESSED      }]; }
-            @:noCompletion inline function get_released    () { return cast byStatus[$v{FlxInputState.RELEASED     }]; }
-            @:noCompletion inline function get_justPressed () { return cast byStatus[$v{FlxInputState.JUST_PRESSED }]; }
-            @:noCompletion inline function get_justReleased() { return cast byStatus[$v{FlxInputState.JUST_RELEASED}]; }
+            @:noCompletion inline function get_pressed     () { return cast listsByStatus[$v{FlxInputState.PRESSED      }]; }
+            @:noCompletion inline function get_released    () { return cast listsByStatus[$v{FlxInputState.RELEASED     }]; }
+            @:noCompletion inline function get_justPressed () { return cast listsByStatus[$v{FlxInputState.JUST_PRESSED }]; }
+            @:noCompletion inline function get_justReleased() { return cast listsByStatus[$v{FlxInputState.JUST_RELEASED}]; }
         }).fields;
         
-        // Analog fields
-        // for (field in parsedEnumFields)
-        // {
-        //     switch field.controlType
-        //     {
-        //         case DIGITAL:
-        //         case ANALOG(arg):
-        //         case ANALOG_XY(argX, argY):
-        //     }
-        // }
+        /** Helper to concat without creating a new array */
+        inline function pushAll(newFields:Array<Field>)
+        {
+            for (field in newFields)
+                fields.push(field);
+        }
         
-        // return fields;
+        // Analog fields
+        for (field in enumDataList)
+        {
+            switch field.controlType
+            {
+                case DIGITAL:
+                case ANALOG(arg):
+                    pushAll(field.createAnalog1DField(arg));
+                case ANALOG_XY(argX, argY):
+                    pushAll(field.createAnalog2DField(argX, argY));
+            }
+        }
+        
+        return fields;
     }
     
     static function buildAnalogActions(action:EnumType, field:EnumField):ComplexType
@@ -274,6 +283,123 @@ class ActionFieldData
         fields[0].doc = doc;
         
         return fields;
+    }
+    
+    public function createAnalog1DField(arg:String):Array<Field>
+    {
+        // get or create the trigger type
+        final typeCt = switch arg
+        {
+            case "amount":
+                (macro: flixel.addons.input.FlxControls.FlxControlAnalogTrigger);
+            case _:
+                createAnalog1DType(arg);
+        }
+        
+        final getterName = 'get_$name';
+        final fields = (macro class TempClass
+        {
+            public var $name(get, never):$typeCt;
+            @:noCompletion
+            inline function $getterName () { return analogs[$p{path}]; }
+        }).fields;
+        fields[0].doc = doc;
+        
+        return fields;
+    }
+    
+    static function createAnalog1DType(arg:String)
+    {
+        final name = 'FlxControlAnalog1D__$arg';
+        
+        // Check whether the generated type already exists
+        try
+        {
+            Context.getType(name);
+            
+            // Return a `ComplexType` for the generated type
+            return TPath({pack: [], name: name});
+        }
+        catch (e) {} // The generated type doesn't exist yet
+        
+        final getterName = 'get_$arg';
+        
+        // define the type
+        final def = (macro class $name
+        {
+            /** The value of this trigger **/
+            public var $arg(get, never):Float;
+            public function $getterName():Float return this.x;
+        });
+        
+        def.meta.push({ name:":forward", pos:Context.currentPos() });
+        
+        final controlType = (macro: flixel.addons.input.FlxControls.FlxControlAnalogBase1D);
+        def.kind = TDAbstract(controlType, [controlType], [controlType]);
+        
+        Context.defineType(def);
+        return TPath({pack: [], name: name});
+    }
+    
+    public function createAnalog2DField(argX:String, argY:String):Array<Field>
+    {
+        // get or create the joystick type
+        final typeCt = switch [argX, argY]
+        {
+            case ["x", "y"]:
+                (macro: flixel.addons.input.FlxControls.FlxControlAnalog2D);
+            case _:
+                createAnalog2DType(argX, argY);
+        }
+        
+        final getterName = 'get_$name';
+        final fields = (macro class TempClass
+        {
+            public var $name(get, never):$typeCt;
+            @:noCompletion
+            inline function $getterName () { return cast analogs[$p{path}]; }
+        }).fields;
+        fields[0].doc = doc;
+        
+        return fields;
+    }
+    
+    static function createAnalog2DType(argX:String, argY:String)
+    {
+        final name = 'FlxControlAnalog2D__${argX}_${argY}';
+        
+        // Check whether the generated type already exists
+        try
+        {
+            Context.getType(name);
+            
+            // Return a `ComplexType` for the generated type
+            return TPath({pack: [], name: name});
+        }
+        catch (e) {} // The generated type doesn't exist yet
+        
+        final getterX = 'get_$argX';
+        final getterY = 'get_$argY';
+        
+        // define the type
+        final def = (macro class $name
+        {
+            /** The horizontal component of this joystick **/
+            public var $argX(get, never):Float;
+            inline function $getterX():Float { @:privateAccess return this.getX(); }
+            
+            /** The vertical component of this joystick **/
+            public var $argY(get, never):Float;
+            inline function $getterY():Float { @:privateAccess return this.getY(); }
+        });
+        
+        def.meta.push({ name:":forward", pos:Context.currentPos() });
+        
+        final controlType = (macro: flixel.addons.input.FlxControls.FlxControlAnalogBase2D);
+        def.kind = TDAbstract(controlType, [controlType], [controlType]);
+        
+        Context.defineType(def);
+        return TPath({pack: [], name: name});
     }
     
     static function getType(field:EnumField)
