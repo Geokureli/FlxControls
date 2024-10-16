@@ -101,10 +101,10 @@ class FlxControlsMacro
             public var justPressed (get, never):$listCT;
             public var justReleased(get, never):$listCT;
             
-            @:noCompletion inline function get_pressed     () { return cast listsByStatus[$v{FlxInputState.PRESSED      }]; }
-            @:noCompletion inline function get_released    () { return cast listsByStatus[$v{FlxInputState.RELEASED     }]; }
-            @:noCompletion inline function get_justPressed () { return cast listsByStatus[$v{FlxInputState.JUST_PRESSED }]; }
-            @:noCompletion inline function get_justReleased() { return cast listsByStatus[$v{FlxInputState.JUST_RELEASED}]; }
+            @:noCompletion inline function get_pressed     () { return cast listsByState[$v{FlxInputState.PRESSED      }]; }
+            @:noCompletion inline function get_released    () { return cast listsByState[$v{FlxInputState.RELEASED     }]; }
+            @:noCompletion inline function get_justPressed () { return cast listsByState[$v{FlxInputState.JUST_PRESSED }]; }
+            @:noCompletion inline function get_justReleased() { return cast listsByState[$v{FlxInputState.JUST_RELEASED}]; }
         }).fields;
         
         /** Helper to concat without creating a new array */
@@ -149,7 +149,7 @@ class FlxControlsMacro
     
     static function buildDigitalActionList(action:EnumType, enumFields:Array<ActionFieldData>):ComplexType
     {
-        final name = 'FlxControlList__${action.pack.join("_")}_${action.name}';
+        final name = 'FlxDigitalSet__${action.pack.join("_")}_${action.name}';
         
         // Check whether the generated type already exists
         try
@@ -164,13 +164,15 @@ class FlxControlsMacro
         final actionCT = Context.getType(action.module + "." + action.name).toComplexType();
         // define the type
         final def = macro class $name { }
-        def.kind = TDClass
-        ({
-            pack: ["flixel", "addons", "input"],
-            name: "FlxControls",
-            sub:"FlxControlList",
-            params: [TPType(actionCT)]
-        });
+        final listCT = (macro: flixel.addons.input.FlxControls.FlxDigitalSet<$actionCT>);
+        def.meta.push({ name:":forward", pos:Context.currentPos() });
+        def.kind = TDAbstract(listCT, [listCT], [listCT]);
+        // ({
+        //     pack: ["flixel", "addons", "input"],
+        //     name: "FlxControls",
+        //     sub:"FlxDigitalSet",
+        //     params: [TPType(actionCT)]
+        // });
         
         for (field in enumFields)
         {
@@ -278,7 +280,7 @@ class ActionFieldData
         {
             public var $name(get, never):Bool;
             @:noCompletion
-            inline function $getterName () { return check($p{path}); }
+            inline function $getterName () { return this.check($p{path}); }
         }).fields;
         fields[0].doc = doc;
         
@@ -301,7 +303,7 @@ class ActionFieldData
         {
             public var $name(get, never):$typeCt;
             @:noCompletion
-            inline function $getterName () { return analogs[$p{path}]; }
+            inline function $getterName () { return analogs.get($p{path}); }
         }).fields;
         fields[0].doc = doc;
         
@@ -357,7 +359,7 @@ class ActionFieldData
         {
             public var $name(get, never):$typeCt;
             @:noCompletion
-            inline function $getterName () { return cast analogs[$p{path}]; }
+            inline function $getterName () { return cast analogSet.get($p{path}); }
         }).fields;
         fields[0].doc = doc;
         

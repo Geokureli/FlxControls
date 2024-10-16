@@ -75,34 +75,21 @@ enum Action
 
 class Controls extends flixel.addons.input.FlxControls<Action>
 {
-    function getDefaultKeyMappings()
+    function getDefaultMappings():ActionMap<Action>
     {
         return
-            [ Action.UP    => [FlxKey.UP   , FlxKey.W]
-            , Action.DOWN  => [FlxKey.DOWN , FlxKey.S]
-            , Action.LEFT  => [FlxKey.LEFT , FlxKey.A]
-            , Action.RIGHT => [FlxKey.RIGHT, FlxKey.D]
-            , Action.JUMP  => [FlxKey.L    , FlxKey.X]
-            , Action.SHOOT => [FlxKey.K    , FlxKey.Z]
-            , Action.ACCEPT=> [FlxKey.K    , FlxKey.Z]
-            , Action.BACK  => [FlxKey.L    , FlxKey.X]
-            , Action.KEY   => [FlxKey.SPACE]
-            ];
-    }
-    
-    function getDefaultGamepadMappings()
-    {
-        return
-            [ Action.UP    => [FlxGamepadInputID.DPAD_UP   , FlxGamepadInputID.LEFT_STICK_DIGITAL_UP    ]
-            , Action.DOWN  => [FlxGamepadInputID.DPAD_DOWN , FlxGamepadInputID.LEFT_STICK_DIGITAL_DOWN  ]
-            , Action.LEFT  => [FlxGamepadInputID.DPAD_LEFT , FlxGamepadInputID.LEFT_STICK_DIGITAL_LEFT  ]
-            , Action.RIGHT => [FlxGamepadInputID.DPAD_RIGHT, FlxGamepadInputID.LEFT_STICK_DIGITAL_RIGHT ]
-            , Action.ACCEPT=> [FlxGamepadInputID.A                ]
-            , Action.BACK  => [FlxGamepadInputID.B                ]
-            , Action.JUMP  => [FlxGamepadInputID.A                ]
-            , Action.SHOOT => [FlxGamepadInputID.B                ]
-            , Action.PAUSE => [FlxGamepadInputID.START            ]
-            , Action.MOVE  => [FlxGamepadInputID.LEFT_ANALOG_STICK]
+            [ Action.UP    => [FlxKey.UP   , FlxKey.W, FlxGamepadInputID.DPAD_UP   , FlxGamepadInputID.LEFT_STICK_DIGITAL_UP    ]
+            , Action.DOWN  => [FlxKey.DOWN , FlxKey.S, FlxGamepadInputID.DPAD_DOWN , FlxGamepadInputID.LEFT_STICK_DIGITAL_DOWN  ]
+            , Action.LEFT  => [FlxKey.LEFT , FlxKey.A, FlxGamepadInputID.DPAD_LEFT , FlxGamepadInputID.LEFT_STICK_DIGITAL_LEFT  ]
+            , Action.RIGHT => [FlxKey.RIGHT, FlxKey.D, FlxGamepadInputID.DPAD_RIGHT, FlxGamepadInputID.LEFT_STICK_DIGITAL_RIGHT ]
+            , Action.JUMP  => [FlxKey.L    , FlxKey.X, FlxGamepadInputID.A         ]
+            , Action.SHOOT => [FlxKey.K    , FlxKey.Z, FlxGamepadInputID.B         ]
+            , Action.ACCEPT=> [FlxKey.K    , FlxKey.Z, FlxGamepadInputID.A         ]
+            , Action.BACK  => [FlxKey.L    , FlxKey.X, FlxGamepadInputID.B         ]
+            // odd-balls
+            , Action.PAUSE => [FlxGamepadInputID.START]
+            , Action.MOVE  => [FlxGamepadInputID.LEFT_ANALOG_STICK, Mouse(Motion())]
+            , Action.KEY   => [SPACE]
             ];
     }
 }

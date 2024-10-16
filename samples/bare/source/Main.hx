@@ -1,5 +1,6 @@
 package ;
 
+import flixel.input.keyboard.FlxKey;
 import flixel.ui.FlxVirtualPad;
 import flixel.FlxG;
 import input.Controls;
@@ -66,7 +67,7 @@ class BootState extends flixel.FlxState
         else
         {
             if (FlxG.keys.justPressed.SPACE)
-                controls.addKey(PAUSE, ENTER);
+                controls.add(PAUSE, ENTER);
         }
     }
 }
