@@ -53,6 +53,7 @@ class BootState extends flixel.FlxState
         });
         
         add(pad = new FlxVirtualPad(FULL, A_B_X_Y));
+        controls.setVirtualPad(pad);
     }
     
     override function update(elapsed:Float)

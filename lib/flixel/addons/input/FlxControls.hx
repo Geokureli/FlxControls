@@ -1,10 +1,13 @@
 package flixel.addons.input;
 
+import flixel.ui.FlxVirtualPad;
+import flixel.input.IFlxInput;
 import flixel.input.FlxInput;
 import flixel.input.actions.FlxActionManager;
 import flixel.input.actions.FlxActionInput;
 import flixel.input.actions.FlxAction;
 import flixel.input.actions.FlxActionInputAnalog;
+import flixel.input.actions.FlxActionInputDigital;
 import flixel.input.actions.FlxActionSet;
 import flixel.input.gamepad.FlxGamepad;
 import flixel.input.gamepad.FlxGamepadInputID;
@@ -131,14 +134,15 @@ abstract InputSource(InputSourceRaw) from InputSourceRaw
     }
 }
 
-typedef ActionMap<TAction> = Map<TAction, Array<InputSource>>;
+typedef ActionMap<TAction:EnumValue> = Map<TAction, Array<InputSource>>;
 
 @:autoBuild(flixel.addons.system.macros.FlxControlsMacro.buildControls())
 abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
 {
     static final allStates:ReadOnlyArray<FlxInputState> = [PRESSED, RELEASED, JUST_PRESSED, JUST_RELEASED];
     
-    public var activeGamepad(default, null):Null<FlxGamepad>;
+    public var activeGamepad(default, null):Null<FlxGamepad> = null;
+    public var activeVPad(default, null):Null<FlxVirtualPad> = null;
     public var name(default, null):String;
     
     // These fields are generated via macro
@@ -156,6 +160,19 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
     
     /** Used internally to get various analog actions */
     final analogSet:FlxAnalogSet<TAction>;
+    
+    /** Used internally for FlxVirtualPads */
+    final vPadProxies:Map<VirtualPadInputID, VirtualPadInputProxy> =
+        [ UP   => new VirtualPadInputProxy()
+        , DOWN => new VirtualPadInputProxy()
+        , LEFT => new VirtualPadInputProxy()
+        , RIGHT=> new VirtualPadInputProxy()
+        , A    => new VirtualPadInputProxy()
+        , B    => new VirtualPadInputProxy()
+        , C    => new VirtualPadInputProxy()
+        , X    => new VirtualPadInputProxy()
+        , Y    => new VirtualPadInputProxy()
+        ];
     
     /** Used internally to list sets of actions that cannot have conflicting inputs */
     final groups:Map<String, Array<TAction>> = [];
@@ -249,7 +266,28 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
     }
     
     abstract function getDefaultMappings():ActionMap<TAction>;
-    // abstract function attachVirtualPad():ActionMap<TAction, FlxGamepadInputID>;
+    
+    public function setVirtualPad(pad:FlxVirtualPad)
+    {
+        activeVPad = pad;
+        vPadProxies[A    ].target = pad.buttonA;
+        vPadProxies[B    ].target = pad.buttonB;
+        vPadProxies[C    ].target = pad.buttonC;
+        vPadProxies[Y    ].target = pad.buttonY;
+        vPadProxies[X    ].target = pad.buttonX;
+        vPadProxies[LEFT ].target = pad.buttonLeft;
+        vPadProxies[UP   ].target = pad.buttonUp;
+        vPadProxies[RIGHT].target = pad.buttonRight;
+        vPadProxies[DOWN ].target = pad.buttonDown;
+    }
+    
+    public function removeVirtualPad()
+    {
+        activeVPad = null;
+        for (proxy in vPadProxies)
+            proxy.target = null;
+    }
+    
     // abstract function createVirtualPad():ActionMap<TAction, FlxGamepadInputID>;
     
     inline public function checkDigital(action:TAction, state:FlxInputState)
@@ -355,12 +393,12 @@ abstract FlxDigitalSet<TAction:EnumValue>(FlxDigitalSetRaw<TAction>) to FlxDigit
     
     inline function add(action:TAction, input:InputSource)
     {
-        return get(action).add(input, state);
+        return get(action).add(parent, input, state);
     }
     
     inline function remove(action:TAction, input:InputSource)
     {
-        return get(action).remove(input);
+        return get(action).remove(parent, input);
     }
 }
 
@@ -388,8 +426,25 @@ class FlxDigitalSetRaw<TAction:EnumValue> extends FlxActionSet
     }
 }
 
+class VirtualPadInputProxy implements IFlxInput
+{
+    public var target:Null<flixel.ui.FlxButton> = null;
+    
+    public var justReleased(get, never):Bool;
+    public var released(get, never):Bool;
+    public var pressed(get, never):Bool;
+    public var justPressed(get, never):Bool;
+    
+    function get_justReleased():Bool return target != null && target.justReleased;
+    function get_released    ():Bool return target != null && target.released;
+    function get_pressed     ():Bool return target != null && target.pressed;
+    function get_justPressed ():Bool return target != null && target.justPressed;
+    
+    public function new () {}
+}
 
 @:allow(flixel.addons.input.FlxDigitalSet)
+@:access(flixel.addons.input.FlxControls)
 abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
 {
     function new (name, ?callback)
@@ -399,7 +454,7 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
     
     inline function check() return this.check();
     
-    function add(input:InputSource, state)
+    function add<TAction:EnumValue>(parent:FlxControls<TAction>, input:InputSource, state)
     {
         return switch input
         {
@@ -407,8 +462,9 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
                 this.addKey(id, state);
             case Gamepad(id):
                 this.addGamepad(id, state);
-            case VirtualPad(_):
-                throw 'VirtualPad not implemented, yet';
+            case VirtualPad(id):
+                @:privateAccess
+                this.addInput(parent.vPadProxies[id], state);
             case Mouse(Button(id)):
                 this.addMouse(id, state);
             case Mouse(found):
@@ -416,7 +472,7 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
         }
     }
     
-    function remove(input:InputSource):Null<FlxActionInput>
+    function remove<TAction:EnumValue>(parent:FlxControls<TAction>, input:InputSource):Null<FlxActionInput>
     {
         return switch input
         {
@@ -424,8 +480,8 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
                 removeKey(id);
             case Gamepad(id):
                 removeGamepad(id);
-            case VirtualPad(_):
-                throw 'VirtualPad not implemented, yet';
+            case VirtualPad(id):
+                removeVirtualPad(parent, id);
             case Mouse(Button(id)):
                 removeMouse(id);
             case Mouse(_):
@@ -466,6 +522,22 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
         for (input in this.inputs)
         {
             if (input.device == MOUSE && id == cast input.inputID)
+            {
+                this.remove(input);
+                return input;
+            }
+        }
+        
+        return null;
+    }
+    
+    function removeVirtualPad<TAction:EnumValue>(parent:FlxControls<TAction>, id:VirtualPadInputID):Null<FlxActionInput>
+    {
+        final proxy = parent.vPadProxies[id];
+        for (input in this.inputs)
+        {
+            @:privateAccess
+            if (input is FlxActionInputDigitalIFlxInput && (cast input:FlxActionInputDigitalIFlxInput).input == proxy)
             {
                 this.remove(input);
                 return input;
