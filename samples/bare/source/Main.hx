@@ -1,8 +1,8 @@
 package ;
 
+import flixel.FlxG;
 import flixel.input.keyboard.FlxKey;
 import flixel.ui.FlxVirtualPad;
-import flixel.FlxG;
 import input.Controls;
 
 class Main extends openfl.display.Sprite
@@ -17,18 +17,14 @@ class Main extends openfl.display.Sprite
 
 class BootState extends flixel.FlxState
 {
-    var controls:Controls;
-    var pad:FlxVirtualPad;
-    
     override function create()
     {
-        super.create();
-    }
-    
-    function initControls()
-    {
-        controls = new Controls("test");
+        final controls = new Controls("test");
         FlxG.inputs.addInput(controls);
+        
+        final pad = new FlxVirtualPad(FULL, A_B_X_Y);
+        controls.setVirtualPad(pad);
+        add(pad);
         
         // Can also check using helper properties generated for each action
         FlxG.watch.addFunction("up"    , ()->controls.pressed.UP    );
@@ -45,30 +41,10 @@ class BootState extends flixel.FlxState
         FlxG.watch.addFunction("l/r"   , ()->controls.pressed.any([LEFT, RIGHT]));
         FlxG.watch.addFunction("u/d"   , ()->controls.pressed.any([UP, DOWN]));
         
-        FlxG.watch.addFunction("move"   , function ()
+        FlxG.watch.addFunction("cam"   , function ()
         {
-            final p = controls.MOVE;
-            // return '${p.x} | ${p.y}';
+            final p = controls.CAM;
             return '${p.x} | ${p.y}';
         });
-        
-        add(pad = new FlxVirtualPad(FULL, A_B_X_Y));
-        controls.setVirtualPad(pad);
-    }
-    
-    override function update(elapsed:Float)
-    {
-        super.update(elapsed);
-        
-        if (controls == null)
-        {
-            // if (FlxG.gamepads.getFirstActiveGamepad() != null)
-                initControls();
-        }
-        else
-        {
-            if (FlxG.keys.justPressed.SPACE)
-                controls.add(PAUSE, ENTER);
-        }
     }
 }

@@ -164,15 +164,9 @@ class FlxControlsMacro
         final actionCT = Context.getType(action.module + "." + action.name).toComplexType();
         // define the type
         final def = macro class $name { }
-        final listCT = (macro: flixel.addons.input.FlxControls.FlxDigitalSet<$actionCT>);
+        final listCT = (macro: flixel.addons.input.FlxDigitalSet<$actionCT>);
         def.meta.push({ name:":forward", pos:Context.currentPos() });
         def.kind = TDAbstract(listCT, [listCT], [listCT]);
-        // ({
-        //     pack: ["flixel", "addons", "input"],
-        //     name: "FlxControls",
-        //     sub:"FlxDigitalSet",
-        //     params: [TPType(actionCT)]
-        // });
         
         for (field in enumFields)
         {
@@ -293,7 +287,7 @@ class ActionFieldData
         final typeCt = switch arg
         {
             case "amount":
-                (macro: flixel.addons.input.FlxControls.FlxControlAnalogTrigger);
+                (macro: flixel.addons.input.FlxAnalogSet.FlxControlAnalog1D);
             case _:
                 createAnalog1DType(arg);
         }
@@ -334,9 +328,9 @@ class ActionFieldData
             public function $getterName():Float return this.x;
         });
         
-        def.meta.push({ name:":forward", pos:Context.currentPos() });
+        // def.meta.push({ name:":forward", pos:Context.currentPos() });
         
-        final controlType = (macro: flixel.addons.input.FlxControls.FlxControlAnalogBase1D);
+        final controlType = (macro: flixel.addons.input.FlxAnalogSet.FlxControlAnalogBase1D);
         def.kind = TDAbstract(controlType, [controlType], [controlType]);
         
         Context.defineType(def);
@@ -349,7 +343,7 @@ class ActionFieldData
         final typeCt = switch [argX, argY]
         {
             case ["x", "y"]:
-                (macro: flixel.addons.input.FlxControls.FlxControlAnalog2D);
+                (macro: flixel.addons.input.FlxAnalogSet.FlxControlAnalog2D);
             case _:
                 createAnalog2DType(argX, argY);
         }
@@ -388,16 +382,16 @@ class ActionFieldData
         {
             /** The horizontal component of this joystick **/
             public var $argX(get, never):Float;
-            inline function $getterX():Float { @:privateAccess return this.getX(); }
+            inline function $getterX():Float { return this.getX(); }
             
             /** The vertical component of this joystick **/
             public var $argY(get, never):Float;
-            inline function $getterY():Float { @:privateAccess return this.getY(); }
+            inline function $getterY():Float { return this.getY(); }
         });
         
         def.meta.push({ name:":forward", pos:Context.currentPos() });
         
-        final controlType = (macro: flixel.addons.input.FlxControls.FlxControlAnalogBase2D);
+        final controlType = (macro: flixel.addons.input.FlxAnalogSet.FlxControlAnalogBase2D);
         def.kind = TDAbstract(controlType, [controlType], [controlType]);
         
         Context.defineType(def);
