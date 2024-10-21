@@ -79,49 +79,28 @@ private class FlxAnalogSetRaw<TAction:EnumValue> extends FlxActionSet
     }
 }
 
-abstract FlxControlAnalog2D(FlxControlAnalogBase2D) to FlxControlAnalogBase2D to FlxControlAnalog to FlxActionAnalog
+abstract FlxControlAnalog2D(FlxControlAnalog) to FlxControlAnalog to FlxActionAnalog
 {
-    /** X axis value, or the value of a single-axis analog input */
-    public var x(get, never):Float;
-    inline function get_x() return this.getX();
-    
-    /** Y axis value (If action only has single-axis input this is always == 0) */
-    public var y(get, never):Float;
-    inline function get_y() return this.getY();
-}
-
-private abstract FlxControlAnalogBase2D(FlxControlAnalog) to FlxControlAnalog to FlxActionAnalog
-{
-    inline public function getX():Float { return this.x; }
-    inline public function getY():Float { return this.y; }
-
-}
-
-abstract FlxControlAnalog1D(FlxControlAnalogBase1D) to FlxControlAnalogBase1D to FlxControlAnalog to FlxActionAnalog
-{
-    /** The trigger value */
-    public var amount(get, never):Float;
-    inline function get_amount() return @:privateAccess this.getX();
-}
-
-@:access(flixel.addons.input.FlxControlAnalog)
-private abstract FlxControlAnalogBase1D(FlxControlAnalog) to FlxControlAnalog to FlxActionAnalog
-{
-    /** The analog value */
-    inline public function getX() return this.x;
-    
-}
-
-private abstract FlxControlAnalog(FlxActionAnalog) to FlxActionAnalog
-{
-    /** X axis value, or the value of a single-axis analog input */
+    /** X axis value */
     public var x(get, never):Float;
     inline function get_x() return this.x;
     
-    /** Y axis value (If action only has single-axis input this is always == 0) */
+    /** Y axis value */
     public var y(get, never):Float;
     inline function get_y() return this.y;
-    
+}
+
+abstract FlxControlAnalog1D(FlxControlAnalog) to FlxControlAnalog to FlxActionAnalog
+{
+    /** The analog value */
+    public var value(get, never):Float;
+    inline function get_value() return this.x;
+}
+
+@:forward(x, y)
+// private 
+abstract FlxControlAnalog(FlxActionAnalog) to FlxActionAnalog
+{
     // public var moved(get, never):Bool // TODO:
     // inline function get_moved():Bool return true; // TODO:
     

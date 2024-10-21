@@ -1,13 +1,13 @@
 package flixel.addons.system.macros;
 
-import flixel.input.FlxInput;
+// import flixel.input.FlxInput;
 import haxe.macro.Expr;
 import haxe.macro.Context;
 import haxe.macro.Type;
 
+using Lambda;
 using haxe.macro.Tools;
 using haxe.macro.TypeTools;
-using flixel.addons.system.macros.FlxControlsMacro.MacroUtils;
 
 class FlxControlsMacro
 {
@@ -38,15 +38,10 @@ class FlxControlsMacro
             case TInst(local, _):
                 
                 final action = getAction(local.get());
-                if (action == null)
-                {
-                    // Don't generate fields if actions is a type param
-                    return fields;
-                }
                 
-                final newFields = buildControlsFields(action);
-                for (newField in newFields)
-                    fields.push(newField);
+                // Don't generate fields if actions is a type param
+                if (action != null)
+                    addControlsFields(action, fields);
                 
                 fields;
             case found:
@@ -88,12 +83,37 @@ class FlxControlsMacro
         }
     }
     
-    static function buildControlsFields(enumType:EnumType):Array<Field>
+    static function addControlsFields(enumType:EnumType, fields:Array<Field>)
     {
         final enumDataList = ActionFieldData.listFromType(enumType);
+        if (enumDataList.length == 0)
+            return;
         
-        // Digital fields
+        // add digital and analog action helpers
+        final newFields = buildControlsFields(enumType, enumDataList);
+        for (newField in newFields)
+            fields.push(newField);
+        
+        // check
+        final existingMapField = fields.find((f)->f.name == "getDefaultMappings");
+        final foundDefaults = enumDataList.exists((action)->action.hasDefaults());
+        // generate default mappings, if possible
+        if ((existingMapField == null || existingMapField.access.contains(AOverride)) && foundDefaults)
+        // if (foundDefaults)
+        {
+            fields.push(buildDefaultMapField(enumDataList));
+        }
+    }
+    
+    static function buildControlsFields(enumType:EnumType, enumDataList:Array<ActionFieldData>):Array<Field>
+    {
+        #if (FlxControls.useSimpleDigital)
+        final actionCT = Context.getType(enumType.module + "." + enumType.name).toComplexType();
+        final listCT = (macro: flixel.addons.input.FlxDigitalSet<$actionCT>);
+        #else
         final listCT = buildDigitalActionList(enumType, enumDataList);
+        #end
+        // Digital fields
         final fields = (macro class TempClass
         {
             public var pressed     (get, never):$listCT;
@@ -101,10 +121,10 @@ class FlxControlsMacro
             public var justPressed (get, never):$listCT;
             public var justReleased(get, never):$listCT;
             
-            @:noCompletion inline function get_pressed     () { return cast listsByState[$v{FlxInputState.PRESSED      }]; }
-            @:noCompletion inline function get_released    () { return cast listsByState[$v{FlxInputState.RELEASED     }]; }
-            @:noCompletion inline function get_justPressed () { return cast listsByState[$v{FlxInputState.JUST_PRESSED }]; }
-            @:noCompletion inline function get_justReleased() { return cast listsByState[$v{FlxInputState.JUST_RELEASED}]; }
+            @:noCompletion inline function get_pressed     () { return cast listsByState[flixel.input.FlxInput.FlxInputState.PRESSED      ]; }
+            @:noCompletion inline function get_released    () { return cast listsByState[flixel.input.FlxInput.FlxInputState.RELEASED     ]; }
+            @:noCompletion inline function get_justPressed () { return cast listsByState[flixel.input.FlxInput.FlxInputState.JUST_PRESSED ]; }
+            @:noCompletion inline function get_justReleased() { return cast listsByState[flixel.input.FlxInput.FlxInputState.JUST_RELEASED]; }
         }).fields;
         
         /** Helper to concat without creating a new array */
@@ -161,7 +181,7 @@ class FlxControlsMacro
         }
         catch (e) {} // The generated type doesn't exist yet
         
-        final actionCT = Context.getType(action.module + "." + action.name).toComplexType();
+        final actionCT = enumFields[0].actionCT;
         // define the type
         final def = macro class $name { }
         final listCT = (macro: flixel.addons.input.FlxDigitalSet<$actionCT>);
@@ -184,53 +204,21 @@ class FlxControlsMacro
         Context.defineType(def);
         return TPath({pack: [], name: name});
     }
-}
-
-private class MacroUtils
-{
-    inline overload extern static public function getAllValidMetas(meta, name:String, validList, addColon = true, addS = true)
-    {
-        final list = new Array<String>();
-        addAllValidMetas(list, meta, name, validList, addColon, addS);
-        return list;
-    }
     
-    inline overload extern static public function getAllValidMetas(meta, names:Array<String>, validList, addColon = true, addS = true)
+    static function buildDefaultMapField(actions:Array<ActionFieldData>):Field
     {
-        final list = new Array<String>();
-        for (name in names)
-            addAllValidMetas(list, meta, name, validList, addColon, addS);
-        return list;
-    }
-    
-    static public function addAllValidMetas(list, meta, name:String, validList, addColon = true, addS = true)
-    {
-        addAllValidMeta(list, meta, name, validList);
-        if (addColon)
-            addAllValidMeta(list, meta, ":" + name, validList);
-        if (addS)
-            addAllValidMeta(list, meta, name + "s", validList);
-        if (addColon && addS)
-            addAllValidMeta(list, meta, ":" + name + "s", validList);
-    }
-    
-    static function addAllValidMeta(list:Array<String>, meta:MetaAccess, name:String, validList:Array<String>)
-    {
-        for (entry in meta.extract(name))
+        final actionCT = actions[0].actionCT;
+        final mapCT = (macro: ActionMap<$actionCT>);
+        // Only add filters with default inputs set
+        final actions = actions.filter((a)->a.hasDefaults());
+        return (macro class TempClass
         {
-            for (param in entry.params)
+            function getDefaultMappings():$mapCT
             {
-                switch(param.expr)
-                {
-                    case EConst(CIdent(name)) if (validList.contains(name.toUpperCase())):
-                        list.push(name.toUpperCase());
-                    case EConst(CIdent(found)):
-                        throw 'Invalid @$name arg, found $found expecting: [${validList.join(", ")}]';
-                    case found:
-                        throw 'Invalid @$name arg, found $found expecting: [${validList.join(", ")}]';
-                }
+                // return null;
+                return $a{actions.map((action) -> return macro $p{action.path} => $a{action.inputs})};
             }
-        }
+        }).fields[0];
     }
 }
 
@@ -239,32 +227,48 @@ class ActionFieldData
 {
     public var name:String;
     public var path:Array<String>;
+    public var actionCT:ComplexType;
     public var controlType:ActionType;
-    public var defaultKeys:Array<String>;
-    public var defaultGPad:Array<String>;
-    public var defaultVPad:Array<String>;
+    public var inputs:Array<Expr>;
     public var doc:String;
     
-    static final validKeys = getAbstractEnumNames("flixel.input.keyboard.FlxKey");
-    static final validButtons = getAbstractEnumNames("flixel.input.gamepad.FlxGamepadInputID");
-    static final validPads = ["UP", "DOWN", "LEFT", "RIGHT", "A", "B", "C", "X", "Y"];
     static public function fromConstruct(action:EnumField, type:EnumType):ActionFieldData
     {
-        final path = getPath(action, type);
-        final controlType = getControlType(action);
-        final keys = action.meta.getAllValidMetas("key", validKeys);
-        final gPad = action.meta.getAllValidMetas("button", validButtons);
-        final vPad = action.meta.getAllValidMetas("pad", validPads);
-        
+        final inputs = getInputs(action.meta.extract(":inputs"));
         return
             { name       : action.name
-            , path       : path
-            , controlType: controlType
-            , defaultKeys: keys
-            , defaultGPad: gPad
-            , defaultVPad: vPad
+            , path       : getPath(action, type)
+            , actionCT   : Context.getType(type.module + "." + type.name).toComplexType()
+            , controlType: getControlType(action)
+            , inputs     : getInputs(action.meta.extract(":inputs"))
             , doc        : action.doc
             };
+    }
+    
+    static function getInputs(inputs:Array<MetadataEntry>):Array<Expr>
+    {
+        switch inputs
+        {
+            case [input]:
+                switch input.params
+                {
+                    case [param]:
+                        switch param.expr
+                        {
+                            case EArrayDecl(values):
+                                return values;
+                            case found:
+                                throw('Expected one parameter with an array of inputs on @:inputs meta, found: [${found.getName()}]');
+                        }
+                    case found:
+                        throw('Expected one parameter with an array of inputs on @:inputs meta, found: ${found.map((p)->p.expr.getName())}');
+                }
+                return null;
+            case []:
+                return null;
+            case found:
+                throw('Expected no more than one @:inputs meta, found ${inputs.length}');
+        }
     }
     
     public function createDigitalGetter():Array<Field>
@@ -286,7 +290,7 @@ class ActionFieldData
         // get or create the trigger type
         final typeCt = switch arg
         {
-            case "amount":
+            case "value":
                 (macro: flixel.addons.input.FlxAnalogSet.FlxControlAnalog1D);
             case _:
                 createAnalog1DType(arg);
@@ -297,11 +301,16 @@ class ActionFieldData
         {
             public var $name(get, never):$typeCt;
             @:noCompletion
-            inline function $getterName () { return analogs.get($p{path}); }
+            inline function $getterName () { return cast analogSet.get($p{path}); }
         }).fields;
         fields[0].doc = doc;
         
         return fields;
+    }
+    
+    public function hasDefaults()
+    {
+        return inputs != null;
     }
     
     static function createAnalog1DType(arg:String)
@@ -330,7 +339,7 @@ class ActionFieldData
         
         // def.meta.push({ name:":forward", pos:Context.currentPos() });
         
-        final controlType = (macro: flixel.addons.input.FlxAnalogSet.FlxControlAnalogBase1D);
+        final controlType = (macro: flixel.addons.input.FlxAnalogSet.FlxControlAnalog);
         def.kind = TDAbstract(controlType, [controlType], [controlType]);
         
         Context.defineType(def);
@@ -370,7 +379,7 @@ class ActionFieldData
             Context.getType(name);
             
             // Return a `ComplexType` for the generated type
-            return TPath({pack: [], name: name});
+            return TPath({ pack: [], name: name });
         }
         catch (e) {} // The generated type doesn't exist yet
         
@@ -382,20 +391,20 @@ class ActionFieldData
         {
             /** The horizontal component of this joystick **/
             public var $argX(get, never):Float;
-            inline function $getterX():Float { return this.getX(); }
+            inline function $getterX():Float { return this.x; }
             
             /** The vertical component of this joystick **/
             public var $argY(get, never):Float;
-            inline function $getterY():Float { return this.getY(); }
+            inline function $getterY():Float { return this.y; }
         });
         
         def.meta.push({ name:":forward", pos:Context.currentPos() });
         
-        final controlType = (macro: flixel.addons.input.FlxAnalogSet.FlxControlAnalogBase2D);
+        final controlType = (macro: flixel.addons.input.FlxAnalogSet.FlxControlAnalog);
         def.kind = TDAbstract(controlType, [controlType], [controlType]);
         
         Context.defineType(def);
-        return TPath({pack: [], name: name});
+        return TPath({ pack: [], name: name });
     }
     
     static function getType(field:EnumField)
@@ -431,6 +440,7 @@ class ActionFieldData
     }
     
     inline static var META = ":analog";
+    static var quotesArg = ~/(["'])(.+?)\1/;
     static function getControlType(action:EnumField)
     {
         final construct = action;
@@ -442,21 +452,9 @@ class ActionFieldData
                 switch(construct.meta.extract(META)[0].params)
                 {
                     case [arg]:
-                        switch(arg.expr)
-                        {
-                            case EConst(CIdent(name)):
-                                ANALOG(name);
-                            case found:
-                                throw 'Invalid @$META arg, expected an identifier, found $found';
-                        }
+                        ANALOG(parseMetaArg(arg, META));
                     case [argX, argY]:
-                        switch([argX.expr, argY.expr])
-                        {
-                            case [EConst(CIdent(nameX)), EConst(CIdent(nameY))]:
-                                ANALOG_XY(nameX, nameY);
-                            case [foundX, foundY]:
-                                throw 'Invalid @$META arg, expected an identifier, found ($foundX, $foundY) ';
-                        }
+                        ANALOG_XY(parseMetaArg(argX, META), parseMetaArg(argY, META));
                     case found:
                         throw 'Invalid @$META args, expected length of 1 or 2, found: @$META(${found})';
                 }
@@ -467,6 +465,19 @@ class ActionFieldData
             case found:
                 throw 'Unhandled action type on ${action.name}, found: $found';
         };
+    }
+    
+    static function parseMetaArg(arg:Expr, metaName:String)
+    {
+        return switch(arg.expr)
+        {
+            case EConst(CString(name, _)):
+                name;
+            case EConst(CIdent(name)):
+                name;
+            case found:
+                throw 'Invalid @$metaName arg, expected an identifier, found $found';
+        }
     }
     
     static function getAbstractEnumNames(typePath:String):Array<String>

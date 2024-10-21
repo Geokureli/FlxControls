@@ -2,8 +2,9 @@ package input;
 
 import flixel.addons.input.FlxControls;
 import flixel.addons.input.FlxControlInputType;
-import flixel.input.gamepad.FlxGamepadInputID;
-import flixel.input.keyboard.FlxKey;
+import flixel.addons.input.FlxControlInputType.FlxVirtualPadInputID as VPad;
+import flixel.input.gamepad.FlxGamepadInputID as GPad;
+import flixel.input.keyboard.FlxKey as Key;
 
 /**
  * Since, in many cases multiple actions should use similar keys, we don't want the
@@ -13,83 +14,48 @@ import flixel.input.keyboard.FlxKey;
 enum Action
 {
     /** Moves the player up, also used to navigate menus */
-    @:gamepad(LEFT_STICK_DIGITAL_UP, DPAD_UP)
-    @:keys(UP, W)
-    @:vpad(UP)
-    UP;
-    
+    @:inputs([Key.UP   , Key.W, DPAD_UP   , LEFT_STICK_DIGITAL_UP   , VPad.UP    ]) UP;
     /** Moves the player down, also used to navigate menus */
-    @:gamepad(LEFT_STICK_DIGITAL_DOWN, DPAD_DOWN)
-    @:keys(DOWN , S)
-    @:vpad(DOWN)
-    DOWN;
-    
+    @:inputs([Key.DOWN , Key.S, DPAD_DOWN , LEFT_STICK_DIGITAL_DOWN , VPad.DOWN  ]) DOWN;
     /** Moves the player left, also used to navigate menus */
-    @:gamepad(LEFT_STICK_DIGITAL_LEFT, DPAD_LEFT)
-    @:keys(LEFT , A)
-    @:vpad(LEFT)
-    LEFT;
-    
+    @:inputs([Key.LEFT , Key.A, DPAD_LEFT , LEFT_STICK_DIGITAL_LEFT , VPad.LEFT  ]) LEFT;
     /** Moves the player right, also used to navigate menus */
-    @:gamepad(LEFT_STICK_DIGITAL_RIGHT, DPAD_RIGHT)
-    @:keys(RIGHT, D)
-    @:vpad(RIGHT)
-    RIGHT;
-    
+    @:inputs([Key.RIGHT, Key.D, DPAD_RIGHT, LEFT_STICK_DIGITAL_RIGHT, VPad.RIGHT ]) RIGHT;
     /** Makes the player jump */
-    @:gamepad(A)
-    @:keys(L, X)
-    @:vpad(A)
-    JUMP;
-    
+    @:inputs([Key.L    , Key.X, GPad.A    , VPad.B ])                               JUMP;
     /** Makes the player shoot */
-    @:gamepad(Y)
-    @:keys(K, Z)
-    @:vpad(Y)
-    SHOOT;
-    
+    @:inputs([Key.K    , Key.Z, GPad.X    , VPad.Y ])                               SHOOT;
     /** Used to select options in the menu */
-    @:gamepad(A)
-    @:keys(K, Z)
-    @:vpad(A)
-    ACCEPT;
-    
+    @:inputs([Key.K    , Key.Z, GPad.A    , VPad.A ])                               ACCEPT;
     /** Used to cancel or exit a menu */
-    @:gamepad(B)
-    @:keys(L, X)
-    @:vpad(B)
-    BACK;
-    
+    @:inputs([Key.L    , Key.X, GPad.B    , VPad.B ])                               BACK;
     /** Pauses the game */
-    @:gamepad(START)
-    @:keys(ENTER)
-    @:vpad(X)
-    PAUSE;
-    
+    @:inputs([Key.ENTER       , START     , VPad.X ])                               PAUSE;
     /** A test action */
-    @:keys(SPACE)
-    KEY;
-    
-    @:analog(x, y)
-    CAM;
+    @:inputs([SPACE])                                                               KEY;
+    @:inputs([RIGHT_ANALOG_STICK, Mouse(Motion())])                 @:analog(x, y)  CAM;
+    @:inputs([Mouse(Motion(X))])                                    @:analog(value) GAS;
+    @:inputs([Mouse(Motion(Y))])                                    @:analog(value) BREAKS;
 }
 
 class Controls extends FlxControls<Action>
 {
-    function getDefaultMappings():ActionMap<Action>
-    {
-        return
-            [ Action.UP    => [FlxKey.UP   , FlxKey.W, FlxGamepadInputID.DPAD_UP   , FlxGamepadInputID.LEFT_STICK_DIGITAL_UP   , FlxVirtualPadInputID.UP    ]
-            , Action.DOWN  => [FlxKey.DOWN , FlxKey.S, FlxGamepadInputID.DPAD_DOWN , FlxGamepadInputID.LEFT_STICK_DIGITAL_DOWN , FlxVirtualPadInputID.DOWN  ]
-            , Action.LEFT  => [FlxKey.LEFT , FlxKey.A, FlxGamepadInputID.DPAD_LEFT , FlxGamepadInputID.LEFT_STICK_DIGITAL_LEFT , FlxVirtualPadInputID.LEFT  ]
-            , Action.RIGHT => [FlxKey.RIGHT, FlxKey.D, FlxGamepadInputID.DPAD_RIGHT, FlxGamepadInputID.LEFT_STICK_DIGITAL_RIGHT, FlxVirtualPadInputID.RIGHT ]
-            , Action.JUMP  => [FlxKey.L    , FlxKey.X, FlxGamepadInputID.A         , FlxVirtualPadInputID.B ]
-            , Action.SHOOT => [FlxKey.K    , FlxKey.Z, FlxGamepadInputID.X         , FlxVirtualPadInputID.Y ]
-            , Action.ACCEPT=> [FlxKey.K    , FlxKey.Z, FlxGamepadInputID.A         , FlxVirtualPadInputID.A ]
-            , Action.BACK  => [FlxKey.L    , FlxKey.X, FlxGamepadInputID.B         , FlxVirtualPadInputID.B ]
-            , Action.PAUSE => [FlxKey.ENTER          , FlxGamepadInputID.START     , FlxVirtualPadInputID.X ]
-            , Action.CAM   => [FlxGamepadInputID.RIGHT_ANALOG_STICK, Mouse(Motion())]
-            , Action.KEY   => [SPACE]
-            ];
-    }
+    // function getDefaultMappings():ActionMap<Action>
+    // {
+    //     return
+    //         [ Action.UP    => [Key.UP   , Key.W, GPad.DPAD_UP   , GPad.LEFT_STICK_DIGITAL_UP   , VPad.UP    ]
+    //         , Action.DOWN  => [Key.DOWN , Key.S, GPad.DPAD_DOWN , GPad.LEFT_STICK_DIGITAL_DOWN , VPad.DOWN  ]
+    //         , Action.LEFT  => [Key.LEFT , Key.A, GPad.DPAD_LEFT , GPad.LEFT_STICK_DIGITAL_LEFT , VPad.LEFT  ]
+    //         , Action.RIGHT => [Key.RIGHT, Key.D, GPad.DPAD_RIGHT, GPad.LEFT_STICK_DIGITAL_RIGHT, VPad.RIGHT ]
+    //         , Action.JUMP  => [Key.L    , Key.X, GPad.A         , VPad.B ]
+    //         , Action.SHOOT => [Key.K    , Key.Z, GPad.X         , VPad.Y ]
+    //         , Action.ACCEPT=> [Key.K    , Key.Z, GPad.A         , VPad.A ]
+    //         , Action.BACK  => [Key.L    , Key.X, GPad.B         , VPad.B ]
+    //         , Action.PAUSE => [Key.ENTER          , GPad.START     , VPad.X ]
+    //         , Action.CAM   => [GPad.RIGHT_ANALOG_STICK, Mouse(Motion())]
+    //         , Action.GAS   => [Mouse(Motion(X))]
+    //         , Action.BREAKS=> [Mouse(Motion(Y))]
+    //         , Action.KEY   => [SPACE]
+    //         ];
+    // }
 }
