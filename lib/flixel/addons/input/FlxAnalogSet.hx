@@ -97,9 +97,14 @@ abstract FlxControlAnalog1D(FlxControlAnalog) to FlxControlAnalog to FlxActionAn
     inline function get_value() return this.x;
 }
 
+private class FlxControlAnalogRaw extends FlxActionAnalog
+{
+    // Add overides here
+}
+
 @:forward(x, y)
 // private 
-abstract FlxControlAnalog(FlxActionAnalog) to FlxActionAnalog
+abstract FlxControlAnalog(FlxControlAnalogRaw) to FlxControlAnalogRaw
 {
     // public var moved(get, never):Bool // TODO:
     // inline function get_moved():Bool return true; // TODO:
@@ -115,7 +120,7 @@ abstract FlxControlAnalog(FlxActionAnalog) to FlxActionAnalog
     
     inline public function new (name, ?callback)
     {
-        this = new FlxActionAnalog(name, callback);
+        this = new FlxControlAnalogRaw(name, callback);
     }
     
     public function add(input:FlxControlInputType)
@@ -201,7 +206,7 @@ abstract FlxControlAnalog(FlxActionAnalog) to FlxActionAnalog
     
     inline public function addMouseMotion(axis, scale = 0.1, deadZone = 0.1, invert = FlxAxes.NONE)
     {
-        this.addMouseMotion(MOVED, axis, Math.ceil(1.0 / scale), deadZone, invert.y, invert.x);
+        this.add(new AnalogMouseMove(MOVED, axis, scale, deadZone, invert));
     }
     
     public function removeMouseMotion(axis)
@@ -209,7 +214,7 @@ abstract FlxControlAnalog(FlxActionAnalog) to FlxActionAnalog
         final inputs:Array<FlxActionInputAnalog> = cast this.inputs;
         for (input in inputs)
         {
-            if (input is FlxActionInputAnalogMouseMotion && axis == input.axis)
+            if (input is AnalogMouseMove && axis == input.axis)
             {
                 this.remove(input);
                 break;
@@ -219,7 +224,7 @@ abstract FlxControlAnalog(FlxActionAnalog) to FlxActionAnalog
     
     inline public function addMousePosition(axis)
     {
-        this.addMousePosition(MOVED, axis);
+        this.add(new AnalogMousePosition(MOVED, axis));
     }
     
     public function removeMousePosition(axis)
@@ -227,7 +232,7 @@ abstract FlxControlAnalog(FlxActionAnalog) to FlxActionAnalog
         final inputs:Array<FlxActionInputAnalog> = cast this.inputs;
         for (input in inputs)
         {
-            if (input is FlxActionInputAnalogMousePosition && axis == input.axis)
+            if (input is AnalogMousePosition && axis == input.axis)
             {
                 this.remove(input);
                 break;
@@ -237,7 +242,7 @@ abstract FlxControlAnalog(FlxActionAnalog) to FlxActionAnalog
     
     inline public function addMouseDrag(buttonId, axis, scale = 0.1, deadZone = 0.1, invert = FlxAxes.NONE)
     {
-        this.addMouseClickAndDragMotion(buttonId, MOVED, axis, Math.ceil(1.0 / scale), deadZone, invert.y, invert.x);
+        this.add(new AnalogMouseDrag(buttonId, MOVED, axis, scale, deadZone, invert));
     }
     
     public function removeMouseDrag(buttonId, axis)
@@ -246,13 +251,61 @@ abstract FlxControlAnalog(FlxActionAnalog) to FlxActionAnalog
         for (input in inputs)
         {
             @:privateAccess
-            if (input is FlxActionInputAnalogClickAndDragMouseMotion
+            if (input is AnalogMouseDrag
             && axis == input.axis
-            && (cast input:FlxActionInputAnalogClickAndDragMouseMotion).button == buttonId)
+            && (cast input:AnalogMouseDrag).button == buttonId)
             {
                 this.remove(input);
                 break;
             }
         }
+    }
+}
+
+class AnalogMouseDrag extends FlxActionInputAnalogClickAndDragMouseMotion
+{
+    public function new (buttonID, trigger, axis = EITHER, scale = 0.1, deadZone = 0.1, invert = FlxAxes.NONE)
+    {
+        super(buttonID, trigger, axis, Math.ceil(1.0 / scale), deadZone, invert.y, invert.x);
+    }
+    
+    override function updateValues(x:Float, y:Float)
+    {
+        if (axis == Y)
+            x = y;
+        
+        super.updateValues(x, y);
+    }
+}
+
+class AnalogMouseMove extends FlxActionInputAnalogMouseMotion
+{
+    public function new (trigger, axis = EITHER, scale = 0.1, deadZone = 0.1, invert = FlxAxes.NONE)
+    {
+        super(trigger, axis, Math.ceil(1.0 / scale), deadZone, invert.y, invert.x);
+    }
+    
+    override function updateValues(x:Float, y:Float)
+    {
+        if (axis == Y)
+            x = y;
+        
+        super.updateValues(x, y);
+    }
+}
+
+class AnalogMousePosition extends FlxActionInputAnalogMousePosition
+{
+    public function new (trigger, axis = EITHER)
+    {
+        super(trigger, axis);
+    }
+    
+    override function updateValues(x:Float, y:Float)
+    {
+        if (axis == Y)
+            x = y;
+        
+        super.updateValues(x, y);
     }
 }

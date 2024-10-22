@@ -23,10 +23,10 @@ class BootState extends flixel.FlxState
         final controls = new Controls("test");
         FlxG.inputs.addInput(controls);
         
-        @:privateAccess
-        final testMap = controls.getDefaultMappings();
-        for (action=>inputs in testMap)
-            trace('action: $action => inputs: $inputs');
+        // @:privateAccess
+        // final testMap = controls.getDefaultMappings();
+        // for (action=>inputs in testMap)
+        //     trace('action: $action => inputs: $inputs');
         
         final pad = new FlxVirtualPad(FULL, A_B_X_Y);
         controls.setVirtualPad(pad);
@@ -46,8 +46,6 @@ class BootState extends flixel.FlxState
         // // Check if multiple actions are pressed like so:
         FlxG.watch.addFunction("l/r"   , ()->controls.pressed.any([LEFT, RIGHT]));
         FlxG.watch.addFunction("u/d"   , ()->controls.pressed.any([UP, DOWN]));
-        FlxG.watch.addFunction("gas"   , ()->controls.GAS.value);
-        FlxG.watch.addFunction("breaks", ()->controls.BREAKS.value);
         
         FlxG.watch.addFunction("cam"   , function ()
         {
