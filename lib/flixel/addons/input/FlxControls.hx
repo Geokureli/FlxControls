@@ -3,22 +3,11 @@ package flixel.addons.input;
 import flixel.addons.input.FlxAnalogSet;
 import flixel.addons.input.FlxDigitalSet;
 import flixel.addons.input.FlxControlInputType;
-import flixel.input.IFlxInput;
 import flixel.input.FlxInput;
-import flixel.input.actions.FlxActionInputAnalog;
+import flixel.input.IFlxInput;
 import flixel.input.actions.FlxActionManager;
 import flixel.input.actions.FlxActionInput;
-import flixel.input.actions.FlxAction;
-// import flixel.input.actions.FlxActionInputAnalog;
-import flixel.input.actions.FlxActionInputDigital;
-import flixel.input.actions.FlxActionSet;
-import flixel.input.gamepad.FlxGamepad;
-import flixel.input.gamepad.FlxGamepadInputID;
-import flixel.input.keyboard.FlxKey;
-import flixel.input.mouse.FlxMouseButton;
 import flixel.ui.FlxVirtualPad;
-import flixel.util.FlxAxes;
-import flixel.util.typeLimit.OneOfTwo;
 import haxe.ds.ReadOnlyArray;
 
 typedef ActionMap<TAction:EnumValue> = Map<TAction, Array<FlxControlInputType>>;
@@ -28,8 +17,16 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
 {
     static final allStates:ReadOnlyArray<FlxInputState> = [PRESSED, RELEASED, JUST_PRESSED, JUST_RELEASED];
     
-    public var activeGamepad(default, null):Null<FlxGamepad> = null;
-    public var activeVPad(default, null):Null<FlxVirtualPad> = null;
+    /**
+     * The gamepad to use, can either be a specific gamepad ID via `ID(myGamepad.id)`, or
+     * a generic term like `FIRST_ACTIVE` or `all`
+     */
+    public var gamepadID(default, null):FlxGamepadID = FIRST_ACTIVE;
+    
+    /** The virtual pad to use */
+    public var virtualPad(default, null):Null<FlxVirtualPad> = null;
+    
+    /** The name of these controls, use for logging */
     public var name(default, null):String;
     
     // These fields are generated via macro
@@ -116,47 +113,29 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         return analogSet.getAnalog1D(action);
     }
     
-    public function setGamepad(gamepad:FlxGamepad)
+    /**
+     * The gamepad to use
+     * 
+     * @param   id  Can either be a specific gamepad ID via `ID(myGamepad.id)`, or
+     * a generic term like `FIRST_ACTIVE` or `all`
+     */
+    public function setGamepadID(id:FlxGamepadID)
     {
-        if (activeGamepad == gamepad)
+        if (gamepadID == id)
             return;
         
-        if (activeGamepad != null)
-            removeActiveGamepad();
+        gamepadID = id;
         
-        activeGamepad = gamepad;
-        
-        for (action in defaultSet.digitalActions)
-        {
-            for (input in action.inputs)
-            {
-                if (input.device == GAMEPAD)
-                {
-                    input.deviceID = gamepad.id;
-                }
-            }
-        }
-    }
-    
-    public function removeActiveGamepad()
-    {
-        for (action in defaultSet.digitalActions)
-        {
-            for (input in action.inputs)
-            {
-                if (input.device == GAMEPAD)
-                {
-                    input.deviceID = FlxInputDeviceID.NONE;
-                }
-            }
-        }
+        for (set in listsByState)
+            set.setGamepadID(id);
     }
     
     abstract function getDefaultMappings():ActionMap<TAction>;
     
+    /** The virtual pad to use */
     public function setVirtualPad(pad:FlxVirtualPad)
     {
-        activeVPad = pad;
+        virtualPad = pad;
         vPadProxies[FlxVirtualPadInputID.A    ].target = pad.buttonA;
         vPadProxies[FlxVirtualPadInputID.B    ].target = pad.buttonB;
         vPadProxies[FlxVirtualPadInputID.C    ].target = pad.buttonC;
@@ -168,22 +147,41 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         vPadProxies[FlxVirtualPadInputID.DOWN ].target = pad.buttonDown;
     }
     
+    /**
+     * Removes the virtual pad, but does not clear the virtual pad inputs from the action map
+     */
     public function removeVirtualPad()
     {
-        activeVPad = null;
+        virtualPad = null;
         for (proxy in vPadProxies)
             proxy.target = null;
     }
     
     // abstract function createVirtualPad():ActionMap<TAction, FlxGamepadInputID>;
     
+    /**
+     * Whether the specified action is in the target state
+     * 
+     * @param   action  An action the player can perform
+     * @param   state   The desired state of digital action
+     */
     inline public function checkDigital(action:TAction, state:FlxInputState)
     {
         listsByState[state].check(action);
     }
     
     /**
-     * TODO: Explain that it accepts FlxKey and others
+     * Adds the specified input to the target action
+     * 
+     * Exmples of acceptable inputs:
+     * - `FlxKey.SPACE` or `Keyboard(SPACE)`
+     * - `FlxGamepadInputID.A` or `Gamepad(A)`
+     * - `FlxMouseButtonID.LEFT` or `Mouse(Button(LEFT))`
+     * - `Mouse(Motion())`
+     * - `FlxVirtualPadInputID.UP` or `VirtualPad(UP)`
+     * 
+     * @param   action  The target action
+     * @param   input   Any input
      */
     public function add(action:TAction, input:FlxControlInputType)
     {
@@ -198,6 +196,14 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         }
     }
     
+    /**
+     * Removes the specified input from the target action
+     * 
+     * See `add` for a list of valid inputs
+     * 
+     * @param   action  The target action
+     * @param   input   Any input
+     */
     public function remove(action:TAction, input:FlxControlInputType)
     {
         if (input.isDigital())
@@ -211,15 +217,6 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         }
     }
     
-    public function replace(action:TAction, ?oldInput:FlxControlInputType, ?newInput:FlxControlInputType)
-    {
-        if (oldInput != null)
-            remove(action, oldInput);
-        
-        if (newInput != null)
-            add(action, newInput);
-    }
-    
     /**
      * Prevents sets from being deactivated, not sure why FlxActionManager assumes
      * each input source would have a dedicated set
@@ -229,3 +226,67 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         // Do nothing
     }
 }
+
+private class VirtualPadInputProxy implements IFlxInput
+{
+    public var target:Null<flixel.ui.FlxButton> = null;
+    
+    public var justReleased(get, never):Bool;
+    public var released(get, never):Bool;
+    public var pressed(get, never):Bool;
+    public var justPressed(get, never):Bool;
+    
+    function get_justReleased():Bool return target != null && target.justReleased;
+    function get_released    ():Bool return target != null && target.released;
+    function get_pressed     ():Bool return target != null && target.pressed;
+    function get_justPressed ():Bool return target != null && target.justPressed;
+    
+    public function new () {}
+}
+
+/**
+ * Used to reference specific gamepads by id or with less specific terms like `FIRST_ACTIVE`
+ */
+abstract FlxGamepadID(FlxGamepadIDRaw) from FlxGamepadIDRaw
+{
+    @:from
+    static public function fromInt(id:Int):FlxGamepadID
+    {
+        return switch (id)
+        {
+            case FlxInputDeviceID.FIRST_ACTIVE:
+                FlxGamepadIDRaw.FIRST_ACTIVE;
+            case FlxInputDeviceID.ALL:
+                FlxGamepadIDRaw.ALL;
+            case FlxInputDeviceID.NONE:
+                FlxGamepadIDRaw.NONE;
+            default:
+                ID(id);
+        }
+    }
+    
+    // @:to
+    public function toDeviceID():Int
+    {
+        return switch this
+        {
+            case FlxGamepadIDRaw.FIRST_ACTIVE:
+                FlxInputDeviceID.FIRST_ACTIVE;
+            case FlxGamepadIDRaw.ALL:
+                FlxInputDeviceID.ALL;
+            case FlxGamepadIDRaw.NONE:
+                FlxInputDeviceID.NONE;
+            case ID(id):
+                id;
+        }
+    }
+}
+
+enum FlxGamepadIDRaw
+{
+    FIRST_ACTIVE;
+    ALL;
+    NONE;
+    ID(id:Int);
+}
+

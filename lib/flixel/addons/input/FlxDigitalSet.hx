@@ -12,7 +12,14 @@ import flixel.input.gamepad.FlxGamepadInputID;
 import flixel.input.keyboard.FlxKey;
 import flixel.input.mouse.FlxMouseButton;
 
-
+/**
+ * Manages the digital actions for a specific input state, allowing you to see whether any action
+ * is currently in that particular state. Primarily accessed via the `FlxControls` fields:
+ * `pressed`, `justPressed`, `released`, and `justReleased`
+ * 
+ * Access the states of actions via `controls.pressed.check(ACCEPT)` or `controls.pressed.any(LEFT,RIGHT)`.
+ * `FlxControls` also uses macros to build handy getters for each action, i.e.: `controls.pressed.ACCEPT`
+ */
 @:allow(flixel.addons.input.FlxControls)
 abstract FlxDigitalSet<TAction:EnumValue>(FlxDigitalSetRaw<TAction>) to FlxDigitalSetRaw<TAction>
 {
@@ -69,9 +76,15 @@ abstract FlxDigitalSet<TAction:EnumValue>(FlxDigitalSetRaw<TAction>) to FlxDigit
     {
         return get(action).remove(parent, input);
     }
+    
+    function setGamepadID(id:FlxGamepadID)
+    {
+        for (control in mappings)
+            control.setGamepadID(id);
+    }
 }
 
-class FlxDigitalSetRaw<TAction:EnumValue> extends FlxActionSet
+private class FlxDigitalSetRaw<TAction:EnumValue> extends FlxActionSet
 {
     public final state:FlxInputState;
     public final mappings:Map<TAction, FlxControlDigital> = [];
@@ -95,33 +108,18 @@ class FlxDigitalSetRaw<TAction:EnumValue> extends FlxActionSet
     }
 }
 
-class VirtualPadInputProxy implements IFlxInput
-{
-    public var target:Null<flixel.ui.FlxButton> = null;
-    
-    public var justReleased(get, never):Bool;
-    public var released(get, never):Bool;
-    public var pressed(get, never):Bool;
-    public var justPressed(get, never):Bool;
-    
-    function get_justReleased():Bool return target != null && target.justReleased;
-    function get_released    ():Bool return target != null && target.released;
-    function get_pressed     ():Bool return target != null && target.pressed;
-    function get_justPressed ():Bool return target != null && target.justPressed;
-    
-    public function new () {}
-}
-
+/**
+ * An digital control containing all the inputs associated with a single action
+ */
 @:allow(flixel.addons.input.FlxDigitalSet)
 @:access(flixel.addons.input.FlxControls)
+@:forward(check)
 abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
 {
     function new (name, ?callback)
     {
         this = new FlxActionDigital(name, callback);
     }
-    
-    inline function check() return this.check();
     
     function add<TAction:EnumValue>(parent:FlxControls<TAction>, input:FlxControlInputType, state)
     {
@@ -130,7 +128,7 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
             case Keyboard(id):
                 this.addKey(id, state);
             case Gamepad(id):
-                this.addGamepad(id, state);
+                this.addGamepad(id, state, parent.gamepadID.toDeviceID());
             case VirtualPad(id):
                 @:privateAccess
                 this.addInput(parent.vPadProxies[id], state);
@@ -214,5 +212,14 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
         }
         
         return null;
+    }
+    
+    public function setGamepadID(id:FlxGamepadID)
+    {
+        for (input in this.inputs)
+        {
+            if (input.device == GAMEPAD)
+                input.deviceID = id.toDeviceID();
+        }
     }
 }
