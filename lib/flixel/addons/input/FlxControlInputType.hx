@@ -1,5 +1,6 @@
 package flixel.addons.input;
 
+import flixel.input.actions.FlxActionInput;
 import flixel.input.actions.FlxActionInputAnalog;
 import flixel.input.gamepad.FlxGamepadInputID;
 import flixel.input.keyboard.FlxKey;
@@ -74,6 +75,84 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
                 
             case Keyboard(_) | VirtualPad(_) | Gamepad(_):
                 true;
+        }
+    }
+    
+    public function compare(input:FlxControlInputType)
+    {
+        return switch [this, input]
+        {
+            case [Gamepad(id1), Gamepad(id2)]:
+                id1 == id2;
+                
+            case [Mouse(Button(id1)), Mouse(Button(id2))]:
+                id1 == id2;
+                
+            case [Mouse(Motion(axis1, _, _, _)), Mouse(Motion(axis2, _, _, _))]:
+                axis1 == axis2;
+                
+            case [Mouse(Drag(id1, axis1, _, _, _)), Mouse(Drag(id2, axis2, _, _, _))]:
+                axis1 == axis2 && id1 == id2;
+                
+            case [Mouse(Position(axis1)), Mouse(Position(axis2))]:
+                axis1 == axis2;
+                
+            case [Keyboard(id1), Keyboard(id2)]:
+                id1 == id2;
+                
+            case [VirtualPad(id1), VirtualPad(id2)]:
+                id1 == id2;
+                
+            default:
+                false;
+        }
+    }
+    
+    public function compareStrict(input:FlxControlInputType)
+    {
+        return switch [this, input]
+        {
+            case [Gamepad(id1), Gamepad(id2)]:
+                id1 == id2;
+                
+            case [Mouse(Button(id1)), Mouse(Button(id2))]:
+                id1 == id2;
+                
+            case [Mouse(Motion(axis1, scale1, deadzone1, invert1)), Mouse(Motion(axis2, scale2, deadzone2, invert2))]:
+                axis1 == axis2
+                && scale1 == scale2
+                && deadzone1 == deadzone2
+                && invert1 == invert2;
+                
+            case [Mouse(Drag(id1, axis1, scale1, deadzone1, invert1)), Mouse(Drag(id2, axis2, scale2, deadzone2, invert2))]:
+                id1 == id2
+                && axis1 == axis2
+                && scale1 == scale2
+                && deadzone1 == deadzone2
+                && invert1 == invert2;
+                
+            case [Mouse(Position(axis1)), Mouse(Position(axis2))]:
+                axis1 == axis2;
+                
+            case [Keyboard(id1), Keyboard(id2)]:
+                id1 == id2;
+                
+            case [VirtualPad(id1), VirtualPad(id2)]:
+                id1 == id2;
+                
+            default:
+                false;
+        }
+    }
+    
+    public function getDevice():FlxInputDevice
+    {
+        return switch this
+        {
+            case Gamepad(_)   : FlxInputDevice.GAMEPAD;
+            case Mouse(_)     : FlxInputDevice.MOUSE;
+            case Keyboard(_)  : FlxInputDevice.KEYBOARD;
+            case VirtualPad(_): FlxInputDevice.IFLXINPUT_OBJECT;
         }
     }
 }

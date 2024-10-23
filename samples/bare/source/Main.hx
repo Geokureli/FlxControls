@@ -52,5 +52,6 @@ class BootState extends flixel.FlxState
             final p = controls.CAM;
             return '${p.x} | ${p.y}';
         });
+        FlxG.watch.addFunction("lastActive", ()->controls.lastActiveDevice.getName());
     }
 }

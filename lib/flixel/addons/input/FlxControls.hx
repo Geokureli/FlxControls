@@ -10,7 +10,10 @@ import flixel.input.actions.FlxActionInput;
 import flixel.ui.FlxVirtualPad;
 import haxe.ds.ReadOnlyArray;
 
+using Lambda;
+
 typedef ActionMap<TAction:EnumValue> = Map<TAction, Array<FlxControlInputType>>;
+
 
 @:autoBuild(flixel.addons.system.macros.FlxControlsMacro.buildControls())
 abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
@@ -61,6 +64,17 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
     /** Used internally to list sets of actions that cannot have conflicting inputs */
     final groups:Map<String, Array<TAction>> = [];
     
+    final inputsByAction:Map<TAction, Array<FlxControlInputType>> = [];
+    
+    public var lastActiveDevice(default, null) = FlxInputDevice.NONE;
+    
+    final deviceActivity:Map<FlxInputDevice, Int> =
+        [ FlxInputDevice.GAMEPAD          => FlxG.game.ticks
+        , FlxInputDevice.MOUSE            => FlxG.game.ticks
+        , FlxInputDevice.KEYBOARD         => FlxG.game.ticks
+        // , FlxInputDevice.IFLXINPUT_OBJECT => FlxG.game.ticks // counts as mouse
+        ];
+    
     public function new (name:String)
     {
         this.name = name;
@@ -83,6 +97,8 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
             if (inputs == null)
                 throw 'Unexpected null inputs for $action';
             
+            inputsByAction[action] = [];
+            
             for (input in inputs)
                 add(action, input);
         }
@@ -101,6 +117,7 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         
         listsByState.clear();
         analogSet.destroy();
+        inputsByAction.clear();
     }
     
     inline public function getAnalog2D(action:TAction):FlxControlAnalog2D
@@ -183,8 +200,15 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
      * @param   action  The target action
      * @param   input   Any input
      */
-    public function add(action:TAction, input:FlxControlInputType)
+    public function add(action:TAction, input:FlxControlInputType):Bool
     {
+        // See if this action already has this input
+        final existingInput = getExistingInput(action, input);
+        if (existingInput != null)
+            remove(existingInput);
+        
+        inputsByAction[action].push(input);
+        
         if (input.isDigital())
         {
             for (list in listsByState)
@@ -194,6 +218,8 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         {
             analogSet.add(action, input);
         }
+        
+        return true;
     }
     
     /**
@@ -204,8 +230,15 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
      * @param   action  The target action
      * @param   input   Any input
      */
-    public function remove(action:TAction, input:FlxControlInputType)
+    public function remove(action:TAction, input:FlxControlInputType):Bool
     {
+        // check inputs for valid matches
+        final input = getExistingInput(action, input);
+        if (input == null)
+            return false;
+        
+        inputsByAction[action].remove(input);
+        
         if (input.isDigital())
         {
             for (list in listsByState)
@@ -214,6 +247,84 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         else
         {
             analogSet.remove(action, input);
+        }
+        
+        return true;
+    }
+    
+    function getExistingInput(action, input:FlxControlInputType)
+    {
+        // see if the exact instance is contained
+        if (inputsByAction[action].contains(input))
+            return input;
+        
+        // search for matching id and axis
+        return inputsByAction[action].find((i)->i.compare(input));
+    }
+    
+    /**
+     * Returns a list of all inputs currently added to the specified action
+     * 
+     * @param   action  The target action
+     * @param   device  Used to filter the list results
+     */
+    public function listInputsFor(action:TAction, device = FlxInputDevice.ALL)
+    {
+        if (device == ALL)
+            return inputsByAction[action].copy();
+        
+        return inputsByAction[action].filter((input)->input.getDevice() == device);
+    }
+    
+    override function update()
+    {
+        super.update();
+        
+        // log the last time each device was used
+        for (device in deviceActivity.keys())
+        {
+            if (isDeviceActive(device))
+                deviceActivity[device] = FlxG.game.ticks;
+        }
+        
+        // get which device was last handled
+        var latestTicks = deviceActivity[lastActiveDevice];
+        for (device=>ticks in deviceActivity)
+        {
+            if (ticks > latestTicks)
+            {
+                latestTicks = ticks;
+                lastActiveDevice = device;
+            }
+        }
+    }
+    
+    public function isDeviceActive(device:FlxInputDevice)
+    {
+        return switch device
+        {
+            // case FlxInputDevice.IFLXINPUT_OBJECT:
+            //     virtualPad != null;
+            case FlxInputDevice.KEYBOARD:
+                FlxG.keys.pressed.ANY;
+            case FlxInputDevice.MOUSE:
+                FlxG.mouse.justMoved || FlxG.mouse.pressed || FlxG.mouse.justReleased;
+            case FlxInputDevice.GAMEPAD:
+                switch gamepadID
+                {
+                    case ID(id):
+                        final gamepad = FlxG.gamepads.getByID(id);
+                        gamepad != null && (gamepad.pressed.ANY || gamepad.justReleased.ANY);
+                    case FIRST_ACTIVE:
+                        final gamepad = FlxG.gamepads.getFirstActiveGamepad();
+                        gamepad != null && (gamepad.pressed.ANY || gamepad.justReleased.ANY);
+                    case ALL:
+                        FlxG.gamepads.anyPressed(ANY);
+                    case NONE:
+                        false;
+                }
+            case found:
+                throw 'Unhandled device: ${found.getName()}';
         }
     }
     
