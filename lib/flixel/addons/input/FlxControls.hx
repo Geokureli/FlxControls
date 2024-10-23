@@ -7,6 +7,7 @@ import flixel.input.FlxInput;
 import flixel.input.IFlxInput;
 import flixel.input.actions.FlxActionInput;
 import flixel.input.actions.FlxActionManager;
+import flixel.input.gamepad.FlxGamepad;
 import flixel.ui.FlxVirtualPad;
 import haxe.ds.ReadOnlyArray;
 
@@ -274,6 +275,18 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         return inputsByAction[action].filter((input)->input.getDevice() == device);
     }
     
+    /**
+     * Returns a list of all inputs currently added to the specified action
+     * 
+     * @param   action  The target action
+     * @param   device  Used to filter the list results
+     */
+    public function listInputLabelsFor(action:TAction, device = FlxInputDevice.ALL)
+    {
+        final gamepad = getActiveGamepad();
+        return listInputsFor(action, device).map((input)->input.getLabel(gamepad));
+    }
+    
     override function update()
     {
         super.update();
@@ -306,7 +319,14 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
             case FlxInputDevice.KEYBOARD:
                 FlxG.keys.pressed.ANY;
             case FlxInputDevice.MOUSE:
-                FlxG.mouse.justMoved || FlxG.mouse.pressed || FlxG.mouse.justReleased;
+                FlxG.mouse.deltaViewX != 0 || FlxG.mouse.deltaViewY != 0
+                || FlxG.mouse.pressed || FlxG.mouse.justReleased
+                #if FLX_MOUSE_ADVANCED
+                || FlxG.mouse.pressedMiddle || FlxG.mouse.justReleasedMiddle
+                || FlxG.mouse.pressedRight || FlxG.mouse.justReleasedRight
+                #end
+                || FlxG.mouse.wheel != 0
+                ;
             case FlxInputDevice.GAMEPAD:
                 switch gamepadID
                 {
@@ -323,6 +343,19 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
                 }
             case found:
                 throw 'Unhandled device: ${found.getName()}';
+        }
+    }
+    
+    function getActiveGamepad():Null<FlxGamepad>
+    {
+        return switch gamepadID
+        {
+            case ID(id):
+                FlxG.gamepads.getByID(id);
+            case FIRST_ACTIVE | ALL:
+                FlxG.gamepads.getFirstActiveGamepad();
+            case NONE:
+                null;
         }
     }
     

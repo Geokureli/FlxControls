@@ -2,6 +2,7 @@ package flixel.addons.input;
 
 import flixel.input.actions.FlxActionInput;
 import flixel.input.actions.FlxActionInputAnalog;
+import flixel.input.gamepad.FlxGamepad;
 import flixel.input.gamepad.FlxGamepadInputID;
 import flixel.input.keyboard.FlxKey;
 import flixel.input.mouse.FlxMouseButton;
@@ -177,6 +178,33 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
             case Mouse(_)     : FlxInputDevice.MOUSE;
             case Keyboard(_)  : FlxInputDevice.KEYBOARD;
             case VirtualPad(_): FlxInputDevice.IFLXINPUT_OBJECT;
+        }
+    }
+    
+    public function getLabel(activeGamepad:FlxGamepad):String
+    {
+        return switch this
+        {
+            case Gamepad(id) if (activeGamepad != null):
+                activeGamepad.getInputLabel(id);
+            case Gamepad(id):
+                id.toString();
+            case Keyboard(id):
+                id.toString();
+            case VirtualPad(id):
+                cast id;
+            case Mouse(Button(LEFT)):
+                "click";
+            case Mouse(Button(RIGHT)):
+                "right-click";
+            case Mouse(Button(MIDDLE)):
+                "middle-click";
+            case Mouse(Position(_)) | Mouse(Motion(_)):
+                "mouse";
+            case Mouse(Drag(_)):
+                "mouse-drag";
+            default:
+                "";
         }
     }
 }
