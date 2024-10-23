@@ -1,12 +1,12 @@
 package flixel.addons.input;
 
 import flixel.addons.input.FlxAnalogSet;
-import flixel.addons.input.FlxDigitalSet;
 import flixel.addons.input.FlxControlInputType;
+import flixel.addons.input.FlxDigitalSet;
 import flixel.input.FlxInput;
 import flixel.input.IFlxInput;
-import flixel.input.actions.FlxActionManager;
 import flixel.input.actions.FlxActionInput;
+import flixel.input.actions.FlxActionManager;
 import flixel.ui.FlxVirtualPad;
 import haxe.ds.ReadOnlyArray;
 
@@ -205,7 +205,7 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         // See if this action already has this input
         final existingInput = getExistingInput(action, input);
         if (existingInput != null)
-            remove(existingInput);
+            remove(action, existingInput);
         
         inputsByAction[action].push(input);
         
