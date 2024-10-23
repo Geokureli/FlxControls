@@ -1,120 +1,46 @@
 package input;
 
-import flixel.addons.input.FlxControls;
 import flixel.FlxG;
-import flixel.input.gamepad.FlxGamepadInputID;
-import flixel.input.keyboard.FlxKey;
+import flixel.addons.input.FlxControls;
+import flixel.addons.input.FlxControlInputType;
+import flixel.addons.input.FlxControlInputType.FlxVirtualPadInputID as VPad;
+import flixel.input.gamepad.FlxGamepadInputID as GPad;
+import flixel.input.keyboard.FlxKey as Key;
 import flixel.ui.FlxVirtualPad;
 
-
-
-class Controls extends FlxControls<Input>
+enum Input
 {
-	
-	function getDefaultKeyMappings()
-	{
-		return
-			[ Input.UP    => [FlxKey.UP   , FlxKey.W]
-			, Input.DOWN  => [FlxKey.DOWN , FlxKey.S]
-			, Input.LEFT  => [FlxKey.LEFT , FlxKey.A]
-			, Input.RIGHT => [FlxKey.RIGHT, FlxKey.D]
-			];
-	}
-	
-	function getDefaultButtonMappings()
-	{
-		return
-			[ Input.UP    => [FlxGamepadInputID.DPAD_UP   , FlxGamepadInputID.LEFT_STICK_DIGITAL_UP    ]
-			, Input.DOWN  => [FlxGamepadInputID.DPAD_DOWN , FlxGamepadInputID.LEFT_STICK_DIGITAL_DOWN  ]
-			, Input.LEFT  => [FlxGamepadInputID.DPAD_LEFT , FlxGamepadInputID.LEFT_STICK_DIGITAL_LEFT  ]
-			, Input.RIGHT => [FlxGamepadInputID.DPAD_RIGHT, FlxGamepadInputID.LEFT_STICK_DIGITAL_RIGHT ]
-			];
-	}
+	// Movement
+	LEFT; RIGHT; UP; DOWN;
+	// UI
+	STYLE_NEXT; STYLE_PREV;
+	ZOOM_IN   ; ZOOM_OUT  ;
+	LEAD_UP   ; LEAD_DOWN ;
+	LERP_UP   ; LERP_DOWN ;
+	/** Triggers screen shake */
+	SHAKE;
 }
 
-class PlayerControls
+class PlayerControls extends FlxControls<Input>
 {
-	/**
-	 * Maps input types to their corresponding keyboard button
-	 */
-	static public var keyMap:Map<Input, Array<FlxKey>> =
-	[
-		Input.LEFT  => [FlxKey.A, FlxKey.LEFT ],
-		Input.DOWN  => [FlxKey.S, FlxKey.DOWN ],
-		Input.RIGHT => [FlxKey.D, FlxKey.RIGHT],
-		Input.UP    => [FlxKey.W, FlxKey.UP   ]
-	];
 	
-	#if FLX_GAMEPAD
-	/**
-	 * Maps input types to their corresponding gamepad dpad button
-	 */
-	static public var buttonMap:Map<Input, {dpad:FlxGamepadInputID, analog:FlxGamepadInputID}> =
-	[
-		Input.LEFT  => { dpad:DPAD_LEFT , analog:LEFT_STICK_DIGITAL_LEFT  },
-		Input.DOWN  => { dpad:DPAD_DOWN , analog:LEFT_STICK_DIGITAL_DOWN  },
-		Input.RIGHT => { dpad:DPAD_RIGHT, analog:LEFT_STICK_DIGITAL_RIGHT },
-		Input.UP    => { dpad:DPAD_UP   , analog:LEFT_STICK_DIGITAL_UP    }
-	];
-	#end
-	
-	/**
-	 * Reference to the gamepad controlling this orb
-	 */
-	public var virtualPad:VirtualPad = null;
-	
-	public function new()
+	function getDefaultMappings():ActionMap<Input>
 	{
-		// create a virtual pad to play on mobile devices
-		final useVirtualPad = #if html5 FlxG.html5.onMobile #elseif mobile true #else false #end;
-		if (useVirtualPad)
-			virtualPad = new VirtualPad();
-	}
-	
-	public function isGamepadConnected()
-	{
-		#if FLX_GAMEPAD
-		return FlxG.gamepads.numActiveGamepads > 0;
-		#else
-		return false;
-		#end
-	}
-	
-	/**
-	 * Helper to detect keyboard or virtual pad presses
-	 */
-	inline public function inputPressed(input:Input)
-	{
-		return keyPressed(input) || virtualPadPressed(input) || gamePadPressed(input);
-	}
-	
-	/**
-	 * Helper to detect keyboard presses
-	 */
-	inline function keyPressed(input:Input)
-	{
-		return FlxG.keys.anyPressed(keyMap[input]);
-	}
-	
-	/**
-	 * Helper to detect virtual pad presses
-	 */
-	inline function virtualPadPressed(input:Input)
-	{
-		return virtualPad != null && virtualPad.pressed(input);
-	}
-	
-	/**
-	 * Helper to detect gamepad presses
-	 */
-	inline function gamePadPressed(input:Input)
-	{
-		#if FLX_GAMEPAD
-		final buttons = buttonMap[input];
-		return FlxG.gamepads.anyPressed(buttons.dpad) || FlxG.gamepads.anyPressed(buttons.analog);
-		#else
-		return false;
-		#end
+		return
+			[ Input.UP         => [Key.UP   , Key.W, DPAD_UP   , LEFT_STICK_DIGITAL_UP   , VPad.UP   ]
+			, Input.DOWN       => [Key.DOWN , Key.S, DPAD_DOWN , LEFT_STICK_DIGITAL_DOWN , VPad.DOWN ]
+			, Input.LEFT       => [Key.LEFT , Key.A, DPAD_LEFT , LEFT_STICK_DIGITAL_LEFT , VPad.LEFT ]
+			, Input.RIGHT      => [Key.RIGHT, Key.D, DPAD_RIGHT, LEFT_STICK_DIGITAL_RIGHT, VPad.RIGHT]
+			, Input.STYLE_NEXT => [Key.Y           , GPad.RIGHT_SHOULDER                             ]
+			, Input.STYLE_PREV => [Key.H           , GPad.LEFT_SHOULDER                              ]
+			, Input.LERP_UP    => [Key.U           , GPad.RIGHT_TRIGGER                              ]
+			, Input.LERP_DOWN  => [Key.J           , GPad.LEFT_TRIGGER                               ]
+			, Input.LEAD_UP    => [Key.I           , GPad.X                                          ]
+			, Input.LEAD_DOWN  => [Key.K           , GPad.A                                          ]
+			, Input.ZOOM_IN    => [Key.O           , GPad.Y                                          ]
+			, Input.ZOOM_OUT   => [Key.L           , GPad.B                                          ]
+			, Input.SHAKE      => [Key.M           , GPad.RIGHT_STICK_CLICK                                      ]
+			];
 	}
 }
 
@@ -127,24 +53,4 @@ abstract VirtualPad(FlxVirtualPad) from FlxVirtualPad to FlxVirtualPad
 	{
 		this = new FlxVirtualPad(FULL, NONE);
 	}
-	
-	public function pressed(input:Input)
-	{
-		return switch(input)
-		{
-			case Input.LEFT : this.buttonLeft.pressed;
-			case Input.RIGHT: this.buttonRight.pressed;
-			case Input.UP   : this.buttonUp.pressed;
-			case Input.DOWN : this.buttonDown.pressed;
-			default: false;
-		}
-	}
-}
-
-enum Input
-{
-	LEFT;
-	RIGHT;
-	UP;
-	DOWN;
 }

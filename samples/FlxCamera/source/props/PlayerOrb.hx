@@ -27,7 +27,12 @@ class PlayerOrb extends Orb
 		// small amount of drag
 		setDrag(0.98);
 		
-		controls = new PlayerControls();
+		controls = new PlayerControls("player");
+		FlxG.inputs.addInput(controls);
+		
+		#if debug
+		FlxG.watch.addFunction("device", ()->controls.lastActiveDevice);
+		#end
 	}
 	
 	override function update(elapsed:Float)
@@ -36,16 +41,16 @@ class PlayerOrb extends Orb
 		
 		// apply impusles to the body based on key presses
 		
-		if (controls.inputPressed(LEFT))
+		if (controls.pressed.LEFT)
 			applyImpulseXY(-IMPULSE, 0);
 		
-		if (controls.inputPressed(DOWN))
+		if (controls.pressed.DOWN)
 			applyImpulseXY(0, IMPULSE);
 		
-		if (controls.inputPressed(RIGHT))
+		if (controls.pressed.RIGHT)
 			applyImpulseXY(IMPULSE, 0);
 		
-		if (controls.inputPressed(UP))
+		if (controls.pressed.UP)
 			applyImpulseXY(0, -IMPULSE);
 	}
 	

@@ -102,21 +102,23 @@ class PlayState extends FlxState
 	{
 		super.update(elapsed);
 		
-		final justPressed = FlxG.keys.justPressed;
+		hud.updateInfo(player.controls);
 		
-		if (justPressed.Y) setStyle(1);
-		if (justPressed.H) setStyle(-1);
+		final justPressed = player.controls.justPressed;
 		
-		if (justPressed.U) setLerp(.1);
-		if (justPressed.J) setLerp(-.1);
+		if (justPressed.STYLE_NEXT) setStyle(1);
+		if (justPressed.STYLE_PREV) setStyle(-1);
 		
-		if (justPressed.I) setLead(.5);
-		if (justPressed.K) setLead(-.5);
+		if (justPressed.LERP_UP  ) setLerp(.1);
+		if (justPressed.LERP_DOWN) setLerp(-.1);
 		
-		if (justPressed.O) setZoom(.1);
-		if (justPressed.L) setZoom(-.1);
+		if (justPressed.LEAD_UP  ) setLead(.5);
+		if (justPressed.LEAD_DOWN) setLead(-.5);
 		
-		if (justPressed.M) FlxG.camera.shake();
+		if (justPressed.ZOOM_IN ) setZoom(.1);
+		if (justPressed.ZOOM_OUT) setZoom(-.1);
+		
+		if (justPressed.SHAKE) FlxG.camera.shake();
 	}
 	
 	public function setZoom(delta:Float)

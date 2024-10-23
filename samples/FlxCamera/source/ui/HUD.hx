@@ -3,8 +3,10 @@ package ui;
 import flixel.FlxCamera;
 import flixel.FlxG;
 import flixel.FlxSprite;
+import flixel.input.actions.FlxActionInput;
 import flixel.group.FlxGroup;
 import flixel.text.FlxText;
+import input.PlayerControls;
 
 inline var WIDTH = 200;
 inline var HEIGHT = 180;
@@ -18,6 +20,14 @@ class HUD extends FlxGroup
 	var txtLerp:Text;
 	var txtLead:Text;
 	var txtZoom:Text;
+	
+	var infoMove:Text;
+	var infoStyle:Text;
+	var infoLerp:Text;
+	var infoLead:Text;
+	var infoZoom:Text;
+	
+	var lastActiveDevice = FlxInputDevice.KEYBOARD;
 
 	public function new()
 	{
@@ -26,18 +36,18 @@ class HUD extends FlxGroup
 		var left = 6;
 		var startY = 10;
 		
-		add(new Text(left, startY, "[W,A,S,D] or arrows to control the orb."));
+		add(infoMove = new Text(left, startY, "[W,A,S,D] or arrows to control the orb."));
 
-		add(new Text(left, startY + 20, "[H] or [Y] to change follow style."));
+		add(infoStyle = new Text(left, startY + 20, "[H] or [Y] to change follow style."));
 		add(txtStyle = new GreenText(left, startY + 33, "LOCKON"));
 
-		add(new Text(left, startY + 55, "[U] or [J] to change lerp."));
+		add(infoLerp = new Text(left, startY + 55, "[U] or [J] to change lerp."));
 		add(txtLerp = new GreenText(left, startY + 68, "Camera lerp: 1"));
 
-		add(new Text(left, startY + 95, "[I] or [K] to change lead."));
+		add(infoLead = new Text(left, startY + 95, "[I] or [K] to change lead."));
 		add(txtLead = new GreenText(left, startY + 108, "Camera lead: 0"));
 
-		add(new Text(left, startY + 135, "[O] or [L] to change zoom."));
+		add(infoZoom = new Text(left, startY + 135, "[O] or [L] to change zoom."));
 		add(txtZoom = new GreenText(left, startY + 148, "Camera zoom: 1"));
 		
 		// create new camera in the top-right corner that only draws this
@@ -45,6 +55,34 @@ class HUD extends FlxGroup
 		camera.alpha = .5;
 		camera.bgColor = 0x80000000;
 		FlxG.cameras.add(camera, false);
+	}
+	
+	public function updateInfo(controls:PlayerControls)
+	{
+		final device:FlxInputDevice = controls.lastActiveDevice == GAMEPAD ? GAMEPAD : KEYBOARD;
+		
+		if (lastActiveDevice == device)
+			return;
+		
+		if (device == GAMEPAD)
+			infoMove.text = "D-pad or left-stick to control the orb.";
+		else
+			infoMove.text = "[W,A,S,D] or arrows to control the orb.";
+		
+		function label(input:Input)
+		{
+			final label = controls.listInputLabelsFor(input, device)[0];
+			if (label == null)
+				throw 'Missing label for input $input';
+			return label.toUpperCase();
+		}
+		
+		infoStyle.text = '[${label(STYLE_NEXT)}] or [${label(STYLE_PREV)}] to change follow style.';
+		infoLerp.text = '[${label(LERP_UP)}] or [${label(LERP_DOWN)}] to change lerp.';
+		infoLead.text = '[${label(LEAD_UP)}] or [${label(LEAD_DOWN)}] to change lead.';
+		infoZoom.text = '[${label(ZOOM_IN)}] or [${label(ZOOM_OUT)}] to change zoom.';
+		
+		lastActiveDevice = device;
 	}
 
 	public function updateStyle(style:FlxCameraFollowStyle)
