@@ -214,10 +214,9 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
             for (list in listsByState)
                 list.add(action, input);
         }
-        else
-        {
+        
+        if (input.isAnalog())
             analogSet.add(action, input);
-        }
         
         return true;
     }
@@ -244,10 +243,9 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
             for (list in listsByState)
                 list.remove(action, input);
         }
-        else
-        {
+        
+        if (input.isAnalog())
             analogSet.remove(action, input);
-        }
         
         return true;
     }

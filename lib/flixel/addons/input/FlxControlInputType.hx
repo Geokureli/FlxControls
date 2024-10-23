@@ -59,12 +59,36 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
         return Mouse(type);
     }
     
+    static final gamepadAnalogTriggers:ReadOnlyArray<FlxGamepadInputID> = [LEFT_TRIGGER, RIGHT_TRIGGER];
+    static final gamepadAnalogSticks:ReadOnlyArray<FlxGamepadInputID> = [LEFT_ANALOG_STICK, RIGHT_ANALOG_STICK];
     static final gamepadAnalogInputs:ReadOnlyArray<FlxGamepadInputID> = [LEFT_TRIGGER, RIGHT_TRIGGER, LEFT_ANALOG_STICK, RIGHT_ANALOG_STICK];
-    public function isDigital()
+    
+    /** Whether the input can be added to a analog set */
+    public function isAnalog()
     {
         return switch this
         {
             case Gamepad(id) if (gamepadAnalogInputs.contains(id)):
+                true;
+                
+            case Mouse(Button(id)):
+                false;
+                
+            case Mouse(_):
+                true;
+                
+            case Keyboard(_) | VirtualPad(_) | Gamepad(_):
+                false;
+        }
+    }
+    
+    /** Whether the input can be added to a digital set */
+    public function isDigital()
+    {
+        return switch this
+        {
+            // note: triggers can be digital (maybe sticks too?)
+            case Gamepad(id) if (gamepadAnalogSticks.contains(id)):
                 false;
                 
             case Mouse(Button(id)):
