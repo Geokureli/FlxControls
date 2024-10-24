@@ -16,7 +16,7 @@ import haxe.ds.ReadOnlyArray;
 enum FlxControlInputTypeRaw
 {
     /** A button on a keyboard */
-    Keyboard(id:FlxKey);
+    Keyboard(type:FlxKeyInputType);
     /** Any button, analog stick or trigger on a gamepad */
     Gamepad(id:FlxGamepadInputID); // TODO: add deadzone
     /** Any button, or position/movement from the mouse */
@@ -33,7 +33,27 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
     @:from
     static public function fromKey(id:FlxKey):FlxControlInputType
     {
-        return Keyboard(id);
+        return Keyboard(Lone(id));
+    }
+    
+    @:from
+    static public function fromKeyList(ids:Array<FlxKey>):FlxControlInputType
+    {
+        if (ids.length == 2)
+        {
+            ids.push(null);
+            ids.push(null);
+        }
+        else if (ids.length != 4)
+            throw 'Invalid key list: $ids, expected length of 4 or 2';
+        
+        return Keyboard(Multi(ids[0], ids[1], ids[2], ids[3]));
+    }
+    
+    @:from
+    static public function fromKeyType(type:FlxKeyInputType):FlxControlInputType
+    {
+        return Keyboard(type);
     }
     
     @:from
@@ -72,13 +92,16 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
             case Gamepad(id) if (gamepadAnalogInputs.contains(id)):
                 true;
                 
+            case Keyboard(Multi(_, _, _, _)):
+                true;
+                
             case Mouse(Button(id)):
                 false;
                 
             case Mouse(_):
                 true;
                 
-            case Keyboard(_) | VirtualPad(_) | Gamepad(_):
+            case Keyboard(Lone(_)) | VirtualPad(_) | Gamepad(_):
                 false;
         }
     }
@@ -90,6 +113,9 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
         {
             // note: triggers can be digital (maybe sticks too?)
             case Gamepad(id) if (gamepadAnalogSticks.contains(id)):
+                false;
+                
+            case Keyboard(Multi(_, _, _, _)):
                 false;
                 
             case Mouse(Button(id)):
@@ -117,13 +143,20 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
                 axis1 == axis2;
                 
             case [Mouse(Drag(id1, axis1, _, _, _)), Mouse(Drag(id2, axis2, _, _, _))]:
-                axis1 == axis2 && id1 == id2;
+                axis1 == axis2
+                && id1 == id2;
                 
             case [Mouse(Position(axis1)), Mouse(Position(axis2))]:
                 axis1 == axis2;
                 
-            case [Keyboard(id1), Keyboard(id2)]:
+            case [Keyboard(Lone(id1)), Keyboard(Lone(id2))]:
                 id1 == id2;
+                
+            case [Keyboard(Multi(up1, down1, right1, left1)), Keyboard(Multi(up2, down2, right2, left2))]:
+                up1 == up2
+                && down1 == down2
+                && right1 == right2
+                && left1 == left2;
                 
             case [VirtualPad(id1), VirtualPad(id2)]:
                 id1 == id2;
@@ -137,12 +170,6 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
     {
         return switch [this, input]
         {
-            case [Gamepad(id1), Gamepad(id2)]:
-                id1 == id2;
-                
-            case [Mouse(Button(id1)), Mouse(Button(id2))]:
-                id1 == id2;
-                
             case [Mouse(Motion(axis1, scale1, deadzone1, invert1)), Mouse(Motion(axis2, scale2, deadzone2, invert2))]:
                 axis1 == axis2
                 && scale1 == scale2
@@ -156,17 +183,8 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
                 && deadzone1 == deadzone2
                 && invert1 == invert2;
                 
-            case [Mouse(Position(axis1)), Mouse(Position(axis2))]:
-                axis1 == axis2;
-                
-            case [Keyboard(id1), Keyboard(id2)]:
-                id1 == id2;
-                
-            case [VirtualPad(id1), VirtualPad(id2)]:
-                id1 == id2;
-                
             default:
-                false;
+                compare(input);
         }
     }
     
@@ -189,8 +207,12 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
                 activeGamepad.getInputLabel(id);
             case Gamepad(id):
                 id.toString();
-            case Keyboard(id):
+            case Keyboard(Lone(id)):
                 id.toString();
+            case Keyboard(Multi(up, down, null, null)):
+                up.toString() + ", " + down.toString();
+            case Keyboard(Multi(up, down, right, left)):
+                up.toString() + ", " + down.toString() + ", " + up.toString() + ", " + down.toString();
             case VirtualPad(id):
                 cast id;
             case Mouse(Button(LEFT)):
@@ -207,6 +229,12 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
                 "";
         }
     }
+}
+
+enum FlxKeyInputType
+{
+    Lone(id:FlxKey);
+    Multi(up:FlxKey, down:FlxKey, ?right:FlxKey, ?left:FlxKey);
 }
 
 enum FlxMouseInputType

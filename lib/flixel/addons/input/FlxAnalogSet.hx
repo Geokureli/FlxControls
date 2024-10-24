@@ -130,7 +130,53 @@ abstract FlxControlAnalog1D(FlxControlAnalog) to FlxControlAnalog to FlxActionAn
 
 private class FlxControlAnalogRaw extends FlxActionAnalog
 {
-    // Add overides here
+    #if (flixel < "5.9.0")
+    /**
+     * See if this action has been triggered
+     */
+    override function check()
+    {
+        final result = checkSuper();
+        if (result && callback != null)
+            callback(this);
+        
+        return result;
+    }
+    
+    /**
+     * avoids a bug that was fixed in 5.9.0
+     */
+    function checkSuper():Bool
+    {
+        if (_timestamp == FlxG.game.ticks)
+            return triggered; // run no more than once per frame
+        
+        _x = null;
+        _y = null;
+        
+        _timestamp = FlxG.game.ticks;
+        triggered = false;
+        
+        var i = inputs != null ? inputs.length : 0;
+        while (i-- > 0) // Iterate backwards, since we may remove items
+        {
+            final input = inputs[i];
+            
+            if (input.destroyed)
+            {
+                inputs.remove(input);
+                continue;
+            }
+            
+            input.update();
+            
+            if (input.check(this))
+                triggered = true;
+        }
+        
+        return triggered;
+    }
+    #end
 }
 
 /**
@@ -182,11 +228,17 @@ abstract FlxControlAnalog(FlxControlAnalogRaw) to FlxControlAnalogRaw
             case Mouse(Button(found)):
                 throw 'Internal error - Unexpected Mouse(Button($found))';
             
-            // Misc
+            // Keys
+            case Keyboard(Multi(up, down, null, null)):
+                addKeys1D(up, down);
+            case Keyboard(Multi(up, down, right, left)):
+                addKeys2D(up, down, right, left);
+            case Keyboard(Lone(found)):
+                throw 'Internal error - Unexpected Keyboard($found)';
+            
+            // VPad
             case VirtualPad(found):
                 throw 'Internal error - Unexpected VirtualPad($found)';
-            case Keyboard(found):
-                throw 'Internal error - Unexpected Keyboard($found)';
         }
     }
     
@@ -215,7 +267,15 @@ abstract FlxControlAnalog(FlxControlAnalogRaw) to FlxControlAnalogRaw
             case Mouse(Button(found)):
                 throw 'Internal error - Unexpected Mouse(Button($found))';
             
-            // Misc
+            // Keys
+            case Keyboard(Multi(up, down, null, null)):
+                removeKeys1D(up, down);
+            case Keyboard(Multi(up, down, right, left)):
+                removeKeys2D(up, down, right, left);
+            case Keyboard(Lone(found)):
+                throw 'Internal error - Unexpected Keyboard($found)';
+            
+            // VPad
             case VirtualPad(found):
                 throw 'Internal error - Unexpected VirtualPad($found)';
             case Keyboard(found):
@@ -301,6 +361,51 @@ abstract FlxControlAnalog(FlxControlAnalogRaw) to FlxControlAnalogRaw
         }
     }
     
+    public function addKeys1D(up:FlxKey, down:FlxKey)
+    {
+        this.add(new Analog1DKeys(this.trigger, up, down));
+    }
+    
+    public function addKeys2D(up:FlxKey, down:FlxKey, right:FlxKey, left:FlxKey)
+    {
+        this.add(new Analog2DKeys(this.trigger, up, down, right, left));
+    }
+    
+    public function removeKeys1D(up:FlxKey, down:FlxKey)
+    {
+        for (input in this.inputs)
+        {
+            if (input is Analog1DKeys)
+            {
+                final input:Analog1DKeys = cast input;
+                if (input.up == up && input.down == down)
+                {
+                    this.remove(input);
+                    break;
+                }
+            }
+        }
+    }
+    
+    public function removeKeys2D(up:FlxKey, down:FlxKey, right:FlxKey, left:FlxKey)
+    {
+        for (input in this.inputs)
+        {
+            if (input is Analog2DKeys)
+            {
+                final input:Analog2DKeys = cast input;
+                if (input.up == up
+                && input.down == down
+                && input.right == right
+                && input.left == left)
+                {
+                    this.remove(input);
+                    break;
+                }
+            }
+        }
+    }
+    
     public function setGamepadID(id:FlxGamepadID)
     {
         for (input in this.inputs)
@@ -308,6 +413,64 @@ abstract FlxControlAnalog(FlxControlAnalogRaw) to FlxControlAnalogRaw
             if (input.device == GAMEPAD)
                 input.deviceID = id.toDeviceID();
         }
+    }
+}
+
+private class Analog1DKeys extends FlxActionInputAnalog
+{
+    public var up:FlxKey;
+    public var down:FlxKey;
+    
+    public function new (trigger:FlxAnalogState, up:FlxKey, down:FlxKey)
+    {
+        this.up = up;
+        this.down = down;
+        super(KEYBOARD, -1, cast trigger, X);
+    }
+    
+    override function update()
+    {
+        #if FLX_KEYBOARD
+        final newX = checkKey(up) - checkKey(down);
+        updateValues(newX, 0);
+        #end
+    }
+    
+    function checkKey(key:FlxKey):Float
+    {
+        return FlxG.keys.checkStatus(key, PRESSED) ? 1.0 : 0.0;
+    }
+}
+
+private class Analog2DKeys extends FlxActionInputAnalog
+{
+    public var up:FlxKey;
+    public var down:FlxKey;
+    public var right:FlxKey;
+    public var left:FlxKey;
+    
+    public function new (trigger:FlxAnalogState, up:FlxKey, down:FlxKey, right:FlxKey, left:FlxKey)
+    {
+        this.up = up;
+        this.down = down;
+        this.right = right;
+        this.left = left;
+        
+        super(KEYBOARD, -1, cast trigger, EITHER);
+    }
+    
+    override function update()
+    {
+        #if FLX_KEYBOARD
+        final newX = checkKey(right) - checkKey(left);
+        final newY = checkKey(up) - checkKey(down);
+        updateValues(newX, newY);
+        #end
+    }
+    
+    function checkKey(key:FlxKey):Float
+    {
+        return FlxG.keys.checkStatus(key, PRESSED) ? 1.0 : 0.0;
     }
 }
 

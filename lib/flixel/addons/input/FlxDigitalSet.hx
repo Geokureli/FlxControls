@@ -125,8 +125,10 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
     {
         return switch input
         {
-            case Keyboard(id):
+            case Keyboard(Lone(id)):
                 this.addKey(id, state);
+            case Keyboard(found):
+                throw 'Internal error - Unexpected Keyboard($found)';
             case Gamepad(id):
                 this.addGamepad(id, state, parent.gamepadID.toDeviceID());
             case VirtualPad(id):
@@ -143,8 +145,10 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
     {
         return switch input
         {
-            case Keyboard(id):
+            case Keyboard(Lone(id)):
                 removeKey(id);
+            case Keyboard(found):
+                throw 'Internal error - Unexpected Keyboard($found)';
             case Gamepad(id):
                 removeGamepad(id);
             case VirtualPad(id):

@@ -2,6 +2,8 @@ package input;
 
 import flixel.addons.input.FlxControls;
 import flixel.addons.input.FlxControlInputType;
+import flixel.addons.input.FlxControlInputType.FlxMouseInputType.Motion as MouseMove;
+import flixel.addons.input.FlxControlInputType.FlxKeyInputType.Multi as MultiKeys;
 import flixel.addons.input.FlxControlInputType.FlxVirtualPadInputID as VPad;
 import flixel.input.gamepad.FlxGamepadInputID as GPad;
 import flixel.input.keyboard.FlxKey as Key;
@@ -32,7 +34,8 @@ enum Action
     /** Pauses the game */
     @:inputs([Key.ENTER       , START     , VPad.X ])                               PAUSE;
     /** A test action */
-    @:inputs([RIGHT_ANALOG_STICK, Mouse(Motion())])                 @:analog(x, y)  CAM;
+    // @:inputs([RIGHT_ANALOG_STICK, MouseMove()]) @:analog(x, y)  CAM;
+    @:inputs([RIGHT_ANALOG_STICK, MouseMove(), [K, I, L, J]]) @:analog(x, y)  CAM;
 }
 
 class Controls extends FlxControls<Action> {}
