@@ -129,8 +129,10 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
                 this.addKey(id, state);
             case Keyboard(found):
                 throw 'Internal error - Unexpected Keyboard($found)';
-            case Gamepad(id):
+            case Gamepad(Lone(id)):
                 this.addGamepad(id, state, parent.gamepadID.toDeviceID());
+            case Gamepad(found):
+                throw 'Internal error - Unexpected Gamepad($found)';
             case VirtualPad(id):
                 @:privateAccess
                 this.addInput(parent.vPadProxies[id], state);
@@ -149,8 +151,10 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
                 removeKey(id);
             case Keyboard(found):
                 throw 'Internal error - Unexpected Keyboard($found)';
-            case Gamepad(id):
+            case Gamepad(Lone(id)):
                 removeGamepad(id);
+            case Gamepad(found):
+                throw 'Internal error - Unexpected Gamepad($found)';
             case VirtualPad(id):
                 removeVirtualPad(parent, id);
             case Mouse(Button(id)):

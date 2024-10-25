@@ -18,7 +18,7 @@ enum FlxControlInputTypeRaw
     /** A button on a keyboard */
     Keyboard(type:FlxKeyInputType);
     /** Any button, analog stick or trigger on a gamepad */
-    Gamepad(id:FlxGamepadInputID); // TODO: add deadzone
+    Gamepad(type:FlxGamepadInputType); // TODO: add deadzone
     /** Any button, or position/movement from the mouse */
     Mouse(type:FlxMouseInputType);
     /** Any button on a virtual pad */
@@ -59,7 +59,13 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
     @:from
     static public function fromGamepad(id:FlxGamepadInputID):FlxControlInputType
     {
-        return Gamepad(id);
+        return Gamepad(Lone(id));
+    }
+    
+    @:from
+    static public function fromGamepadType(type:FlxGamepadInputType):FlxControlInputType
+    {
+        return Gamepad(type);
     }
     
     @:from
@@ -89,7 +95,10 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
     {
         return switch this
         {
-            case Gamepad(id) if (gamepadAnalogInputs.contains(id)):
+            case Gamepad(Lone(id)) if (gamepadAnalogInputs.contains(id)):
+                true;
+            
+            case Gamepad(Multi(_, _, _, _)):
                 true;
                 
             case Keyboard(Multi(_, _, _, _)):
@@ -112,7 +121,13 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
         return switch this
         {
             // note: triggers can be digital (maybe sticks too?)
-            case Gamepad(id) if (gamepadAnalogSticks.contains(id)):
+            case Gamepad(Lone(id)) if (gamepadAnalogSticks.contains(id)):
+                false;
+            
+            case Gamepad(Lone(id)):
+                true;
+            
+            case Gamepad(Multi(_, _, _, _)):
                 false;
                 
             case Keyboard(Multi(_, _, _, _)):
@@ -133,8 +148,14 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
     {
         return switch [this, input]
         {
-            case [Gamepad(id1), Gamepad(id2)]:
+            case [Gamepad(Lone(id1)), Gamepad(Lone(id2))]:
                 id1 == id2;
+                
+            case [Gamepad(Multi(up1, down1, left1, right1)), Gamepad(Multi(up2, down2, left2, right2))]:
+                up1 == up2
+                && down1 == down2
+                && right1 == right2
+                && left1 == left2;
                 
             case [Mouse(Button(id1)), Mouse(Button(id2))]:
                 id1 == id2;
@@ -201,18 +222,36 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
     
     public function getLabel(activeGamepad:FlxGamepad):String
     {
+        function gPad(id:FlxGamepadInputID)
+        {
+            return activeGamepad != null
+                ? activeGamepad.getInputLabel(id)
+                : id.toString();
+        }
+        
+        function key(id:FlxKey)
+        {
+            return id.toString();
+        }
+        
         return switch this
         {
-            case Gamepad(id) if (activeGamepad != null):
-                activeGamepad.getInputLabel(id);
-            case Gamepad(id):
-                id.toString();
+            // Gamepad
+            case Gamepad(Lone(id)):
+                gPad(id);
+            case Gamepad(Multi(up, down, null, null)):
+                gPad(up) + ", " + gPad(down);
+            case Gamepad(Multi(up, down, right, left)):
+                gPad(up) + ", " + gPad(down) + ", " + gPad(up) + ", " + gPad(down);
+            
+            // Keyboard
             case Keyboard(Lone(id)):
-                id.toString();
+                key(id);
             case Keyboard(Multi(up, down, null, null)):
-                up.toString() + ", " + down.toString();
+                key(up) + ", " + key(down);
             case Keyboard(Multi(up, down, right, left)):
-                up.toString() + ", " + down.toString() + ", " + up.toString() + ", " + down.toString();
+                key(up) + ", " + key(down) + ", " + key(up) + ", " + key(down);
+                
             case VirtualPad(id):
                 cast id;
             case Mouse(Button(LEFT)):
@@ -233,8 +272,28 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
 
 enum FlxKeyInputType
 {
+    /**
+     * A single input, the default. You should rarely need to specify this, as it's assumed
+     */
     Lone(id:FlxKey);
+    
+    /**
+     * Used to define analog-like behavior using multiple digital inputs
+     */
     Multi(up:FlxKey, down:FlxKey, ?right:FlxKey, ?left:FlxKey);
+}
+
+enum FlxGamepadInputType
+{
+    /**
+     * A single input, the default. You should rarely need to specify this, as it's assumed
+     */
+    Lone(id:FlxGamepadInputID);
+    
+    /**
+     * Used to define analog-like behavior using multiple digital inputs
+     */
+    Multi(up:FlxGamepadInputID, down:FlxGamepadInputID, ?right:FlxGamepadInputID, ?left:FlxGamepadInputID);
 }
 
 enum FlxMouseInputType

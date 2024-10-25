@@ -3,7 +3,8 @@ package input;
 import flixel.addons.input.FlxControls;
 import flixel.addons.input.FlxControlInputType;
 import flixel.addons.input.FlxControlInputType.FlxMouseInputType.Motion as MouseMove;
-import flixel.addons.input.FlxControlInputType.FlxKeyInputType.Multi as MultiKeys;
+import flixel.addons.input.FlxControlInputType.FlxKeyInputType.Multi as MultiKey;
+import flixel.addons.input.FlxControlInputType.FlxGamepadInputType.Multi as MultiPad;
 import flixel.addons.input.FlxControlInputType.FlxVirtualPadInputID as VPad;
 import flixel.input.gamepad.FlxGamepadInputID as GPad;
 import flixel.input.keyboard.FlxKey as Key;
@@ -23,20 +24,9 @@ enum Action
     @:inputs([Key.LEFT , Key.A, DPAD_LEFT , LEFT_STICK_DIGITAL_LEFT , VPad.LEFT  ]) LEFT;
     /** Moves the player right, also used to navigate menus */
     @:inputs([Key.RIGHT, Key.D, DPAD_RIGHT, LEFT_STICK_DIGITAL_RIGHT, VPad.RIGHT ]) RIGHT;
-    /** Makes the player jump */
-    @:inputs([Key.L    , Key.X, GPad.A    , VPad.B ])                               JUMP;
-    /** Makes the player shoot */
-    @:inputs([Key.K    , Key.Z, GPad.X    , VPad.Y ])                               SHOOT;
-    /** Used to select options in the menu */
-    @:inputs([Key.K    , Key.Z, GPad.A    , VPad.A ])                               ACCEPT;
-    /** Used to cancel or exit a menu */
-    @:inputs([Key.L    , Key.X, GPad.B    , VPad.B ])                               BACK;
-    /** Pauses the game */
-    @:inputs([Key.ENTER       , START     , VPad.X ])                               PAUSE;
     /** A test action */
-    // @:inputs([RIGHT_ANALOG_STICK, MouseMove()]) @:analog(x, y)  CAM;
-    @:inputs([RIGHT_ANALOG_STICK, MouseMove(), [K, I, L, J]]) @:analog(x2, y2)      CAM2;
-    @:inputs([RIGHT_ANALOG_STICK, MouseMove(), [K, I, L, J]]) @:analog( x,  y)      CAM;
+    @:inputs([RIGHT_ANALOG_STICK, MouseMove(), [K, I, L, J], MultiPad(B, X, A, Y)]) @:analog(x2, y2) CAM2;
+    @:inputs([RIGHT_ANALOG_STICK, MouseMove(), [K, I, L, J], MultiPad(B, X, A, Y)]) @:analog( x,  y) CAM;
     @:inputs([RIGHT_TRIGGER]) @:analog(vroom)   GAS;
     @:inputs([LEFT_TRIGGER])  @:analog(value) BREAKS;
 }

@@ -359,7 +359,7 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         }
     }
     
-    function getActiveGamepad():Null<FlxGamepad>
+    public function getActiveGamepad():Null<FlxGamepad>
     {
         return switch gamepadID
         {
