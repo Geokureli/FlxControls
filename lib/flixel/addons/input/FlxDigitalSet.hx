@@ -133,9 +133,11 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
                 this.addGamepad(id, state, parent.gamepadID.toDeviceID());
             case Gamepad(found):
                 throw 'Internal error - Unexpected Gamepad($found)';
-            case VirtualPad(id):
+            case VirtualPad(Lone(id)):
                 @:privateAccess
                 this.addInput(parent.vPadProxies[id], state);
+            case VirtualPad(found):
+                throw 'Internal error - Unexpected VirtualPad($found)';
             case Mouse(Button(id)):
                 this.addMouse(id, state);
             case Mouse(found):
@@ -155,8 +157,10 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
                 removeGamepad(id);
             case Gamepad(found):
                 throw 'Internal error - Unexpected Gamepad($found)';
-            case VirtualPad(id):
+            case VirtualPad(Lone(id)):
                 removeVirtualPad(parent, id);
+            case VirtualPad(found):
+                throw 'Internal error - Unexpected Gamepad($found)';
             case Mouse(Button(id)):
                 removeMouse(id);
             case Mouse(_):

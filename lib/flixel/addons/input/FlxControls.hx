@@ -15,7 +15,7 @@ import haxe.ds.ReadOnlyArray;
 using Lambda;
 
 typedef ActionMap<TAction:EnumValue> = Map<TAction, Array<FlxControlInputType>>;
-
+typedef VPadMap = Map<FlxVirtualPadInputID, VirtualPadInputProxy>;
 
 @:autoBuild(flixel.addons.system.macros.FlxControlsMacro.buildControls())
 abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
@@ -49,7 +49,7 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
     final analogSets = new Map<TAction, FlxAnalogSet<TAction>>();
     
     /** Used internally for FlxVirtualPads */
-    final vPadProxies:Map<FlxVirtualPadInputID, VirtualPadInputProxy> =
+    final vPadProxies:VPadMap =
         [ UP   => new VirtualPadInputProxy()
         , DOWN => new VirtualPadInputProxy()
         , LEFT => new VirtualPadInputProxy()

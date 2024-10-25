@@ -22,7 +22,7 @@ enum FlxControlInputTypeRaw
     /** Any button, or position/movement from the mouse */
     Mouse(type:FlxMouseInputType);
     /** Any button on a virtual pad */
-    VirtualPad(id:FlxVirtualPadInputID);
+    VirtualPad(type:FlxVirtualPadInputType);
 }
 
 /**
@@ -39,14 +39,7 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
     @:from
     static public function fromKeyList(ids:Array<FlxKey>):FlxControlInputType
     {
-        if (ids.length == 2)
-        {
-            ids.push(null);
-            ids.push(null);
-        }
-        else if (ids.length != 4)
-            throw 'Invalid key list: $ids, expected length of 4 or 2';
-        
+        final ids = validateMulti(ids);
         return Keyboard(Multi(ids[0], ids[1], ids[2], ids[3]));
     }
     
@@ -63,6 +56,13 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
     }
     
     @:from
+    static public function fromGamepadList(ids:Array<FlxGamepadInputID>):FlxControlInputType
+    {
+        final ids = validateMulti(ids);
+        return Gamepad(Multi(ids[0], ids[1], ids[2], ids[3]));
+    }
+    
+    @:from
     static public function fromGamepadType(type:FlxGamepadInputType):FlxControlInputType
     {
         return Gamepad(type);
@@ -71,7 +71,20 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
     @:from
     static public function fromVirtualPad(id:FlxVirtualPadInputID):FlxControlInputType
     {
-        return VirtualPad(id);
+        return VirtualPad(Lone(id));
+    }
+    
+    @:from
+    static public function fromVirtualPadList(ids:Array<FlxVirtualPadInputID>):FlxControlInputType
+    {
+        final ids = validateMulti(ids);
+        return VirtualPad(Multi(ids[0], ids[1], ids[2], ids[3]));
+    }
+    
+    @:from
+    static public function fromVirtualPadType(type:FlxVirtualPadInputType):FlxControlInputType
+    {
+        return VirtualPad(type);
     }
     
     @:from
@@ -84,6 +97,19 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
     static public function fromMouse(type:FlxMouseInputType):FlxControlInputType
     {
         return Mouse(type);
+    }
+    
+    static function validateMulti<T>(ids:Array<T>)
+    {
+        if (ids.length == 2)
+        {
+            ids.push(null);
+            ids.push(null);
+        }
+        else if (ids.length != 4)
+            throw 'Invalid key list: $ids, expected length of 4 or 2';
+        
+        return ids;
     }
     
     static final gamepadAnalogTriggers:ReadOnlyArray<FlxGamepadInputID> = [LEFT_TRIGGER, RIGHT_TRIGGER];
@@ -102,6 +128,9 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
                 true;
                 
             case Keyboard(Multi(_, _, _, _)):
+                true;
+                
+            case VirtualPad(Multi(_, _, _, _)):
                 true;
                 
             case Mouse(Button(id)):
@@ -131,6 +160,9 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
                 false;
                 
             case Keyboard(Multi(_, _, _, _)):
+                false;
+                
+            case VirtualPad(Multi(_, _, _, _)):
                 false;
                 
             case Mouse(Button(id)):
@@ -179,8 +211,14 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
                 && right1 == right2
                 && left1 == left2;
                 
-            case [VirtualPad(id1), VirtualPad(id2)]:
+            case [VirtualPad(Lone(id1)), VirtualPad(Lone(id2))]:
                 id1 == id2;
+                
+            case [VirtualPad(Multi(up1, down1, right1, left1)), VirtualPad(Multi(up2, down2, right2, left2))]:
+                up1 == up2
+                && down1 == down2
+                && right1 == right2
+                && left1 == left2;
                 
             default:
                 false;
@@ -294,6 +332,19 @@ enum FlxGamepadInputType
      * Used to define analog-like behavior using multiple digital inputs
      */
     Multi(up:FlxGamepadInputID, down:FlxGamepadInputID, ?right:FlxGamepadInputID, ?left:FlxGamepadInputID);
+}
+
+enum FlxVirtualPadInputType
+{
+    /**
+     * A single input, the default. You should rarely need to specify this, as it's assumed
+     */
+    Lone(id:FlxVirtualPadInputID);
+    
+    /**
+     * Used to define analog-like behavior using multiple digital inputs
+     */
+    Multi(up:FlxVirtualPadInputID, down:FlxVirtualPadInputID, ?right:FlxVirtualPadInputID, ?left:FlxVirtualPadInputID);
 }
 
 enum FlxMouseInputType

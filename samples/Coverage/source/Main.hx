@@ -37,11 +37,6 @@ class BootState extends flixel.FlxState
         FlxG.watch.addFunction("down"  , ()->controls.pressed.DOWN  );
         FlxG.watch.addFunction("left"  , ()->controls.pressed.LEFT  );
         FlxG.watch.addFunction("right" , ()->controls.pressed.RIGHT );
-        FlxG.watch.addFunction("jump"  , ()->controls.pressed.JUMP  );
-        FlxG.watch.addFunction("shoot" , ()->controls.pressed.SHOOT );
-        FlxG.watch.addFunction("accept", ()->controls.pressed.ACCEPT);
-        FlxG.watch.addFunction("back"  , ()->controls.pressed.BACK  );
-        FlxG.watch.addFunction("pause" , ()->controls.pressed.PAUSE );
         
         FlxG.watch.addFunction("cam-up" , ()->{
             // trace(controls.CAM.pressed);

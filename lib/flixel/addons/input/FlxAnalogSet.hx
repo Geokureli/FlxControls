@@ -295,7 +295,11 @@ class FlxControlAnalog extends FlxActionAnalog
                 throw 'Internal error - Unexpected Keyboard($found)';
             
             // VPad
-            case VirtualPad(found):
+            case VirtualPad(Multi(up, down, null, null)):
+                @:privateAccess addVPad1D(parent.vPadProxies, up, down);
+            case VirtualPad(Multi(up, down, right, left)):
+                @:privateAccess addVPad2D(parent.vPadProxies, up, down, right, left);
+            case VirtualPad(Lone(found)):
                 throw 'Internal error - Unexpected VirtualPad($found)';
         }
     }
@@ -335,11 +339,15 @@ class FlxControlAnalog extends FlxActionAnalog
             case Keyboard(Multi(up, down, right, left)):
                 removeKeys2D(up, down, right, left);
             case Keyboard(Lone(found)):
-                throw 'Internal error - Unexpected Keyboard($found)';
+                throw 'Internal error - Unexpected Keyboard(Lone($found))';
             
             // VPad
-            case VirtualPad(found):
-                throw 'Internal error - Unexpected VirtualPad($found)';
+            case VirtualPad(Multi(up, down, null, null)):
+                removeVPad1D(up, down);
+            case VirtualPad(Multi(up, down, right, left)):
+                removeVPad2D(up, down, right, left);
+            case VirtualPad(Lone(found)):
+                throw 'Internal error - Unexpected VirtualPad(Lone($found))';
         }
     }
     
@@ -484,6 +492,51 @@ class FlxControlAnalog extends FlxActionAnalog
             if (input is Analog2DGamepad)
             {
                 final input:Analog2DGamepad = cast input;
+                if (input.up == up
+                && input.down == down
+                && input.right == right
+                && input.left == left)
+                {
+                    this.remove(input);
+                    break;
+                }
+            }
+        }
+    }
+    
+    function addVPad1D(proxies:VPadMap, up, down)
+    {
+        add(new Analog1DVPad(proxies, this.trigger, up, down));
+    }
+    
+    function addVPad2D(proxies:VPadMap, up, down, right, left)
+    {
+        add(new Analog2DVPad(proxies, this.trigger, up, down, right, left));
+    }
+    
+    function removeVPad1D(up, down)
+    {
+        for (input in this.inputs)
+        {
+            if (input is Analog1DVPad)
+            {
+                final input:Analog1DVPad = cast input;
+                if (input.up == up && input.down == down)
+                {
+                    this.remove(input);
+                    break;
+                }
+            }
+        }
+    }
+    
+    function removeVPad2D(up, down, right, left)
+    {
+        for (input in this.inputs)
+        {
+            if (input is Analog2DVPad)
+            {
+                final input:Analog2DVPad = cast input;
                 if (input.up == up
                 && input.down == down
                 && input.right == right
@@ -645,7 +698,7 @@ private class Analog1DGamepad extends FlxActionInputAnalog
     
     override function update()
     {
-        #if FLX_KEYBOARD
+        #if FLX_GAMEPAD
         final newX = checkPad(up, deviceID) - checkPad(down, deviceID);
         updateValues(newX, 0);
         #end
@@ -677,15 +730,76 @@ private class Analog2DGamepad extends FlxActionInputAnalog
         updateValues(newX, newY);
         #end
     }
+}
+
+inline function checkVPad(id:FlxVirtualPadInputID, proxies:VPadMap):Float
+{
+    return proxies[id].pressed ? 1.0 : 0.0;
+}
+
+
+private class Analog1DVPad extends FlxActionInputAnalog
+{
+    public var proxies:VPadMap;
+    public var up:FlxVirtualPadInputID;
+    public var down:FlxVirtualPadInputID;
     
-    override function check(action)
-	{
-		final result = super.check(action);
-        if (result)
-            FlxG.watch.addQuick('gpad2d', '( x: $x | y: $y )');
+    public function new (proxies:VPadMap, trigger:FlxAnalogState, up, down)
+    {
+        this.proxies = proxies;
+        this.up = up;
+        this.down = down;
+        super(IFLXINPUT_OBJECT, -1, cast trigger, X);
+    }
+    
+    override function update()
+    {
+        #if FLX_MOUSE
+        final newX = checkVPad(up, proxies) - checkVPad(down, proxies);
+        updateValues(newX, 0);
+        #end
+    }
+    
+    override function destroy()
+    {
+        super.destroy();
+        proxies = null;
+    }
+}
+
+private class Analog2DVPad extends FlxActionInputAnalog
+{
+    public var proxies:VPadMap;
+    public var up:FlxVirtualPadInputID;
+    public var down:FlxVirtualPadInputID;
+    public var right:FlxVirtualPadInputID;
+    public var left:FlxVirtualPadInputID;
+    
+    public function new (proxies:VPadMap, trigger:FlxAnalogState, up, down, right, left)
+    {
+        this.proxies = proxies;
+        this.up = up;
+        this.down = down;
+        this.right = right;
+        this.left = left;
         
-        return result;
-	}
+        super(IFLXINPUT_OBJECT, -1, cast trigger, EITHER);
+    }
+    
+    override function update()
+    {
+        #if FLX_MOUSE
+        final newX = checkVPad(right, proxies) - checkVPad(left, proxies);
+        final newY = checkVPad(up, proxies) - checkVPad(down, proxies);
+        updateValues(newX, newY);
+        #end
+    }
+    
+    override function destroy()
+    {
+        super.destroy();
+        proxies = null;
+    }
 }
 
 private class AnalogMouseDrag extends FlxActionInputAnalogClickAndDragMouseMotion
