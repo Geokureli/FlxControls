@@ -35,7 +35,10 @@ enum Action
     @:inputs([Key.ENTER       , START     , VPad.X ])                               PAUSE;
     /** A test action */
     // @:inputs([RIGHT_ANALOG_STICK, MouseMove()]) @:analog(x, y)  CAM;
-    @:inputs([RIGHT_ANALOG_STICK, MouseMove(), [K, I, L, J]]) @:analog(x, y)  CAM;
+    @:inputs([RIGHT_ANALOG_STICK, MouseMove(), [K, I, L, J]]) @:analog(x2, y2)      CAM2;
+    @:inputs([RIGHT_ANALOG_STICK, MouseMove(), [K, I, L, J]]) @:analog( x,  y)      CAM;
+    @:inputs([RIGHT_TRIGGER]) @:analog(vroom)   GAS;
+    @:inputs([LEFT_TRIGGER])  @:analog(value) BREAKS;
 }
 
 class Controls extends FlxControls<Action> {}

@@ -6,6 +6,7 @@ import flixel.addons.input.FlxDigitalSet;
 import flixel.input.FlxInput;
 import flixel.input.IFlxInput;
 import flixel.input.actions.FlxActionInput;
+import flixel.input.actions.FlxActionInputAnalog;
 import flixel.input.actions.FlxActionManager;
 import flixel.input.gamepad.FlxGamepad;
 import flixel.ui.FlxVirtualPad;
@@ -39,15 +40,13 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
     // public var justPressed (get, never):FlxDigitalSet<TAction>;
     // public var justReleased(get, never):FlxDigitalSet<TAction>;
     
-    // @:noCompletion inline function get_pressed     () { return listsByState[PRESSED      ]; }
-    // @:noCompletion inline function get_released    () { return listsByState[RELEASED     ]; }
-    // @:noCompletion inline function get_justPressed () { return listsByState[JUST_PRESSED ]; }
-    // @:noCompletion inline function get_justReleased() { return listsByState[JUST_RELEASED]; }
+    // @:noCompletion inline function get_pressed     () { return digitalSets[PRESSED      ]; }
+    // @:noCompletion inline function get_released    () { return digitalSets[RELEASED     ]; }
+    // @:noCompletion inline function get_justPressed () { return digitalSets[JUST_PRESSED ]; }
+    // @:noCompletion inline function get_justReleased() { return digitalSets[JUST_RELEASED]; }
     
-    final listsByState = new Map<FlxInputState, FlxDigitalSet<TAction>>();
-    
-    /** Used internally to get various analog actions */
-    final analogSet:FlxAnalogSet<TAction>;
+    final digitalSets = new Map<FlxInputState, FlxDigitalSet<TAction>>();
+    final analogSets = new Map<TAction, FlxAnalogSet<TAction>>();
     
     /** Used internally for FlxVirtualPads */
     final vPadProxies:Map<FlxVirtualPadInputID, VirtualPadInputProxy> =
@@ -83,14 +82,11 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         
         final mappings = getDefaultMappings();
         
-        analogSet = new FlxAnalogSet(this);
-        addSet(analogSet);
-        
         // Initialize the digital lists
         for (state in allStates)
         {
-            listsByState[state] = new FlxDigitalSet(this, state);
-            addSet(listsByState[state]);
+            digitalSets[state] = new FlxDigitalSet(this, state);
+            addSet(digitalSets[state]);
         }
         
         for (action=>inputs in mappings)
@@ -113,23 +109,26 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
     {
         super.destroy();
         
-        for (list in listsByState)
+        for (list in digitalSets)
             list.destroy();
         
-        listsByState.clear();
-        analogSet.destroy();
+        for (list in analogSets)
+            list.destroy();
+        
+        digitalSets.clear();
+        analogSets.clear();
         inputsByAction.clear();
     }
     
-    inline public function getAnalog2D(action:TAction):FlxControlAnalog2D
-    {
-        return analogSet.getAnalog2D(action);
-    }
+    // inline public function getAnalog2D(action:TAction):FlxControlAnalog2D
+    // {
+    //     return analogSet.getAnalog2D(action);
+    // }
     
-    inline public function getAnalog1D(action:TAction):FlxControlAnalog1D
-    {
-        return analogSet.getAnalog1D(action);
-    }
+    // inline public function getAnalog1D(action:TAction):FlxControlAnalog1D
+    // {
+    //     return analogSet.getAnalog1D(action);
+    // }
     
     /**
      * The gamepad to use
@@ -144,7 +143,10 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         
         gamepadID = id;
         
-        for (set in listsByState)
+        for (set in digitalSets)
+            set.setGamepadID(id);
+        
+        for (set in analogSets)
             set.setGamepadID(id);
     }
     
@@ -185,7 +187,7 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
      */
     inline public function checkDigital(action:TAction, state:FlxInputState)
     {
-        listsByState[state].check(action);
+        digitalSets[state].check(action);
     }
     
     /**
@@ -212,12 +214,12 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         
         if (input.isDigital())
         {
-            for (list in listsByState)
+            for (list in digitalSets)
                 list.add(action, input);
         }
         
         if (input.isAnalog())
-            analogSet.add(action, input);
+            getAnalogSet(action).add(input);
         
         return true;
     }
@@ -241,14 +243,22 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         
         if (input.isDigital())
         {
-            for (list in listsByState)
+            for (list in digitalSets)
                 list.remove(action, input);
         }
         
         if (input.isAnalog())
-            analogSet.remove(action, input);
+            getAnalogSet(action).remove(input);
         
         return true;
+    }
+    
+    function getAnalogSet(action:TAction)
+    {
+        if (analogSets.exists(action) == false)
+            analogSets[action] = new FlxAnalogSet(this, action);
+        
+        return analogSets[action];
     }
     
     function getExistingInput(action, input:FlxControlInputType)
@@ -290,6 +300,9 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
     override function update()
     {
         super.update();
+        
+        for (set in analogSets)
+            set.update();
         
         // log the last time each device was used
         for (device in deviceActivity.keys())

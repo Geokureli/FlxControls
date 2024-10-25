@@ -1,5 +1,9 @@
 package flixel.addons.input;
 
+import flixel.input.FlxInput;
+import flixel.util.FlxDirection;
+import flixel.math.FlxMath;
+import flixel.FlxG;
 import flixel.addons.input.FlxControls;
 import flixel.addons.input.FlxControlInputType;
 import flixel.input.actions.FlxActionInput;
@@ -7,129 +11,447 @@ import flixel.input.actions.FlxAction;
 import flixel.input.actions.FlxActionInputAnalog;
 import flixel.input.actions.FlxActionSet;
 import flixel.input.gamepad.FlxGamepadInputID;
+import flixel.input.keyboard.FlxKey;
 import flixel.util.FlxAxes;
+
+@:forward
+abstract FlxAnalogSet1D<TAction:EnumValue>(FlxAnalogSet1DBase<TAction>) to FlxAnalogSet1DBase<TAction>
+{
+    /** The value of this action */
+    public var value(get, never):Float;
+    inline function get_value():Float { @:privateAccess return this.control.x; }
+}
+
+@:allow(flixel.addons.input.FlxAnalogDirections2D)
+@:access(flixel.addons.input.FlxAnalogSet)
+@:forward
+abstract FlxAnalogSet1DBase<TAction:EnumValue>(FlxAnalogSet<TAction>) to FlxAnalogSet<TAction>
+{
+    /**
+     * Helper for extracting digital directional states from a 2D analog action.
+     * For instance, if the action's `y` is positive, `pressed.up` will be `true`
+     */
+    public var pressed(get, never):FlxAnalogDirections1D<TAction>;
+    inline function get_pressed() return this.pressed;
+    
+    /**
+     * Helper for extracting digital directional states from a 2D analog action.
+     * For instance, if the action's `y` just became positive, `justPressed.up` will be `true`
+     */
+    public var justPressed(get, never):FlxAnalogDirections1D<TAction>;
+    inline function get_justPressed() return this.justPressed;
+    
+    /**
+     * Helper for extracting digital directional states from a 2D analog action.
+     * For instance, if the action's `y` is `0` or negative, `released.up` will be `true`
+     */
+    public var released(get, never):FlxAnalogDirections1D<TAction>;
+    inline function get_released() return this.released;
+    
+    /**
+     * Helper for extracting digital directional states from a 2D analog action.
+     * For instance, if the action's `y` just became `0` or negative, `justReleased.up` will be `true`
+     */
+    public var justReleased(get, never):FlxAnalogDirections1D<TAction>;
+    inline function get_justReleased() return this.justReleased;
+}
+
+@:forward
+abstract FlxAnalogSet2D<TAction:EnumValue>(FlxAnalogSet2DBase<TAction>) to FlxAnalogSet2DBase<TAction>
+{
+    /** The horizontal component of this 2D action */
+    public var x(get, never):Float;
+    /** The vertical component of this 2D action */
+    public var y(get, never):Float;
+    inline function get_x():Float { @:privateAccess return this.control.x; }
+    inline function get_y():Float { @:privateAccess return this.control.y; }
+}
+
+@:allow(flixel.addons.input.FlxAnalogDirections2D)
+@:forward
+abstract FlxAnalogSet2DBase<TAction:EnumValue>(FlxAnalogSet<TAction>) to FlxAnalogSet<TAction>
+{
+    /**
+     * Helper for extracting digital directional states from a 2D analog action.
+     * For instance, if the action's `y` is positive, `pressed.up` will be `true`
+     */
+    public var pressed(get, never):FlxAnalogDirections2D<TAction>;
+    inline function get_pressed() return this.pressed;
+    
+    /**
+     * Helper for extracting digital directional states from a 2D analog action.
+     * For instance, if the action's `y` just became positive, `justPressed.up` will be `true`
+     */
+    public var justPressed(get, never):FlxAnalogDirections2D<TAction>;
+    inline function get_justPressed() return this.justPressed;
+    
+    /**
+     * Helper for extracting digital directional states from a 2D analog action.
+     * For instance, if the action's `y` is `0` or negative, `released.up` will be `true`
+     */
+    public var released(get, never):FlxAnalogDirections2D<TAction>;
+    inline function get_released() return this.released;
+    
+    /**
+     * Helper for extracting digital directional states from a 2D analog action.
+     * For instance, if the action's `y` just became `0` or negative, `justReleased.up` will be `true`
+     */
+    public var justReleased(get, never):FlxAnalogDirections2D<TAction>;
+    inline function get_justReleased() return this.justReleased;
+}
 
 /**
  * Manages analog actions. There is usually only 1 of these per FlxControls instance, and it's only
  * accessed by FlxControls, which offers ways to use the actions in this set.
  */
-@:forward(destroy)
-abstract FlxAnalogSet<TAction:EnumValue>(FlxAnalogSetRaw<TAction>) to FlxAnalogSetRaw<TAction>
+@:allow(flixel.addons.input.FlxControls)
+@:allow(flixel.addons.input.FlxAnalogSet2DBase)
+class FlxAnalogSet<TAction:EnumValue>
 {
-    var mappings(get, never):Map<TAction, FlxControlAnalog>;
-    var parent(get, never):FlxControls<TAction>;
+    final pressed:FlxAnalogDirections2D<TAction>;
+    final justPressed:FlxAnalogDirections2D<TAction>;
+    final released:FlxAnalogDirections2D<TAction>;
+    final justReleased:FlxAnalogDirections2D<TAction>;
     
-    function get_mappings() return this.mappings;
-    function get_parent() return this.parent;
+    var upInput = new FlxInput<FlxDirection>(UP);
+    var downInput = new FlxInput<FlxDirection>(DOWN);
+    var leftInput = new FlxInput<FlxDirection>(LEFT);
+    var rightInput = new FlxInput<FlxDirection>(RIGHT);
     
-    public function new(parent)
+    var control:FlxControlAnalog;
+    var parent:FlxControls<TAction>;
+    var name:String;
+    
+    function new(parent, action:TAction)
     {
-        this = new FlxAnalogSetRaw(parent);
-    }
-    
-    /**
-     * Retrieves the control associated with the target action
-     */
-    public function get(action:TAction)
-    {
-        if (mappings.exists(action) == false)
-        {
-            mappings[action] = new FlxControlAnalog('${parent.name}:${action.getName()}');
-            this.add(mappings[action]);
-        }
+        this.parent = parent;
+        final namePrefix = '${parent.name}:${action.getName()}';
+        name = '$namePrefix-analogSet';
+        control = new FlxControlAnalog('$namePrefix-control', MOVED);
         
-        return mappings[action];
+        pressed      = new FlxAnalogDirections2D(this, PRESSED      );
+        released     = new FlxAnalogDirections2D(this, RELEASED     );
+        justPressed  = new FlxAnalogDirections2D(this, JUST_PRESSED );
+        justReleased = new FlxAnalogDirections2D(this, JUST_RELEASED);
     }
     
-    /**
-     * Retrieves the control associated with the target action
-     * 
-     * **Note:** Assumes the control is two-dimensional
-     */
-    inline public function getAnalog2D(action:TAction):FlxControlAnalog2D
+    function destroy()
     {
-        return cast mappings[action];
+        parent = null;
+        
+        pressed.destroy();
+        justPressed.destroy();
+        released.destroy();
+        justReleased.destroy();
     }
     
-    /**
-     * Retrieves the control associated with the target action
-     * 
-     * **Note:** Assumes the control is one-dimensional
-     */
-    inline public function getAnalog1D(action:TAction):FlxControlAnalog1D
+    function update()
     {
-        return cast mappings[action];
+        control.update();
+        
+        upInput.update();
+        if (control.y > 0 && upInput.released) upInput.press();
+        if (control.y <= 0 && upInput.pressed) upInput.release();
+        
+        downInput.update();
+        if (control.y < 0 && downInput.released) downInput.press();
+        if (control.y >= 0 && downInput.pressed) downInput.release();
+        
+        rightInput.update();
+        if (control.x > 0 && rightInput.released) rightInput.press();
+        if (control.x <= 0 && rightInput.pressed) rightInput.release();
+        
+        leftInput.update();
+        if (control.x < 0 && leftInput.released) leftInput.press();
+        if (control.x >= 0 && leftInput.pressed) leftInput.release();
     }
     
     /**
      * Registers the control associated with the target action
      */
-    inline public function add(action:TAction, input:FlxControlInputType)
+    function add(input:FlxControlInputType)
     {
-        return get(action).add(parent, input);
+        control.addInputType(parent, input);
     }
     
     /**
      * Unregisters the control associated with the target action
      */
-    inline public function remove(action:TAction, input:FlxControlInputType)
+    function remove(input:FlxControlInputType)
     {
-        return get(action).remove(input);
+        control.removeInputType(input);
     }
     
     function setGamepadID(id:FlxGamepadID)
     {
-        for (control in mappings)
-            control.setGamepadID(id);
+        control.setGamepadID(id);
     }
 }
 
-private class FlxAnalogSetRaw<TAction:EnumValue> extends FlxActionSet
+abstract FlxAnalogDirections1D<TAction:EnumValue>(FlxAnalogDirections2D<TAction>) from FlxAnalogDirections2D<TAction>
 {
-    /**
-     * The map of actions to controls, used by `FlxAnalogSet`
-     */
-    public final mappings:Map<TAction, FlxControlAnalog> = [];
+    /** The digital up component of this 2D action **/
+    public var up(get, never):Bool;
+    function get_up() return this.right;
     
-    /**
-     * The controlling instance
-     */
-    public var parent:FlxControls<TAction>;
+    /** The digital down component of this 2D action **/
+    public var down(get, never):Bool;
+    function get_down() return this.left;
     
-    public function new(parent)
+    public function toString()
     {
-        this.parent = parent;
-        
-        super('${parent.name}:analog-list');
+        return '( u: $up | d: $down )';
     }
+}
+
+@:allow(flixel.addons.input.FlxAnalogSet)
+@:access(flixel.addons.input.FlxAnalogSet)
+class FlxAnalogDirections2D<TAction:EnumValue>
+{
+    /** The digital up component of this 2D action **/
+    public var up(get, never):Bool;
+    function get_up() return set.upInput.hasState(state);
     
-    override function destroy()
+    /** The digital down component of this 2D action **/
+    public var down(get, never):Bool;
+    function get_down() return set.downInput.hasState(state);
+    
+    /** The digital left component of this 2D action **/
+    public var left(get, never):Bool;
+    function get_left() return set.leftInput.hasState(state);
+    
+    /** The digital right component of this 2D action **/
+    public var right(get, never):Bool;
+    function get_right() return set.rightInput.hasState(state);
+    
+    var set:FlxAnalogSet<TAction>;
+    final state:FlxInputState;
+    
+    function new(set, state)
     {
-        parent = null;
-        mappings.clear();
+        this.set = set;
+        this.state = cast state;
+    }
+    
+    function destroy()
+    {
+        this.set = null;
+    }
+    
+    public function toString()
+    {
+        return '( u: $up | d: $down | l: $left | r: $right)';
     }
 }
 
-abstract FlxControlAnalog2D(FlxControlAnalog) to FlxControlAnalog to FlxActionAnalog
+/**
+ * An analog control containing all the inputs associated with a single action
+ */
+class FlxControlAnalog extends FlxActionAnalog
 {
-    /** X axis value */
-    public var x(get, never):Float;
-    inline function get_x() return this.x;
+    var trigger:FlxAnalogState;
     
-    /** Y axis value */
-    public var y(get, never):Float;
-    inline function get_y() return this.y;
-}
-
-abstract FlxControlAnalog1D(FlxControlAnalog) to FlxControlAnalog to FlxActionAnalog
-{
-    /** The analog value */
-    public var value(get, never):Float;
-    inline function get_value() return this.x;
-}
-
-private class FlxControlAnalogRaw extends FlxActionAnalog
-{
+    public function new (name, trigger, ?callback)
+    {
+        this.trigger = trigger;
+        super(name, callback);
+    }
+    
+    /**
+     * Adds the input to this control's list
+     */
+    public function addInputType<TAction:EnumValue>(parent:FlxControls<TAction>, input:FlxControlInputType)
+    {
+        switch input
+        {
+            // Gamepad
+            case Gamepad(id) if (id == LEFT_TRIGGER || id == RIGHT_TRIGGER):
+                addGamepadInput(id, X, parent.gamepadID);
+            case Gamepad(id) if (id == LEFT_ANALOG_STICK || id == RIGHT_ANALOG_STICK):
+                addGamepadInput(id, EITHER, parent.gamepadID);
+            case Gamepad(found):
+                throw 'Internal Error - Unexpected Gamepad($found)';
+            
+            // Mouse
+            case Mouse(Drag(id, axis, scale, deadzone, invert)):
+                add(new AnalogMouseDrag(id ?? LEFT, this.trigger, axis ?? EITHER, scale ?? 0.1, deadzone ?? 0.1, invert ?? FlxAxes.NONE));
+            case Mouse(Position(axis)):
+                add(new AnalogMousePosition(this.trigger, axis));
+            case Mouse(Motion(axis, scale, deadzone, invert)):
+                add(new AnalogMouseMove(this.trigger, axis ?? EITHER, scale ?? 0.1, deadzone ?? 0.1, invert ?? FlxAxes.NONE));
+            case Mouse(Button(found)):
+                throw 'Internal error - Unexpected Mouse(Button($found))';
+            
+            // Keys
+            case Keyboard(Multi(up, down, null, null)):
+                addKeys1D(up, down);
+            case Keyboard(Multi(up, down, right, left)):
+                addKeys2D(up, down, right, left);
+            case Keyboard(Lone(found)):
+                throw 'Internal error - Unexpected Keyboard($found)';
+            
+            // VPad
+            case VirtualPad(found):
+                throw 'Internal error - Unexpected VirtualPad($found)';
+        }
+    }
+    
+    /**
+     * Removes the input from this control's list
+     */
+    public function removeInputType(input:FlxControlInputType)
+    {
+        switch input
+        {
+            // Gamepad
+            case Gamepad(id) if (id == LEFT_TRIGGER || id == RIGHT_TRIGGER):
+                removeGamepadInput(id, X);
+            case Gamepad(id) if (id == LEFT_ANALOG_STICK || id == RIGHT_ANALOG_STICK):
+                removeGamepadInput(id, EITHER);
+            case Gamepad(found):
+                throw 'Internal Error - Unexpected Gamepad($found)';
+            
+            // Mouse
+            case Mouse(Drag(id, axis, _, _, _)):
+                removeMouseDrag(id, axis);
+            case Mouse(Position(axis)):
+                removeMousePosition(axis);
+            case Mouse(Motion(axis, _, _, _)):
+                removeMouseMotion(axis);
+            case Mouse(Button(found)):
+                throw 'Internal error - Unexpected Mouse(Button($found))';
+            
+            // Keys
+            case Keyboard(Multi(up, down, null, null)):
+                removeKeys1D(up, down);
+            case Keyboard(Multi(up, down, right, left)):
+                removeKeys2D(up, down, right, left);
+            case Keyboard(Lone(found)):
+                throw 'Internal error - Unexpected Keyboard($found)';
+            
+            // VPad
+            case VirtualPad(found):
+                throw 'Internal error - Unexpected VirtualPad($found)';
+        }
+    }
+    
+    inline function addGamepadInput(inputID:FlxGamepadInputID, axis, gamepadID:FlxGamepadID)
+    {
+        addGamepad(inputID, this.trigger, axis, gamepadID.toDeviceID());
+    }
+    
+    function removeGamepadInput(inputID:FlxGamepadInputID, axis)
+    {
+        final inputs:Array<FlxActionInputAnalog> = cast this.inputs;
+        for (input in inputs)
+        {
+            if (input.device == GAMEPAD
+            && inputID == (cast input.inputID)
+            && this.trigger == (cast input.trigger)
+            && axis == input.axis)
+            {
+                this.remove(input);
+                break;
+            }
+        }
+    }
+    
+    function removeMouseMotion(axis)
+    {
+        final inputs:Array<FlxActionInputAnalog> = cast this.inputs;
+        for (input in inputs)
+        {
+            if (input is AnalogMouseMove && axis == input.axis)
+            {
+                this.remove(input);
+                break;
+            }
+        }
+    }
+    
+    function removeMousePosition(axis)
+    {
+        final inputs:Array<FlxActionInputAnalog> = cast this.inputs;
+        for (input in inputs)
+        {
+            if (input is AnalogMousePosition && axis == input.axis)
+            {
+                this.remove(input);
+                break;
+            }
+        }
+    }
+    
+    function removeMouseDrag(buttonId, axis)
+    {
+        final inputs:Array<FlxActionInputAnalog> = cast this.inputs;
+        for (input in inputs)
+        {
+            @:privateAccess
+            if (input is AnalogMouseDrag
+            && axis == input.axis
+            && (cast input:AnalogMouseDrag).button == buttonId)
+            {
+                this.remove(input);
+                break;
+            }
+        }
+    }
+    
+    function addKeys1D(up:FlxKey, down:FlxKey)
+    {
+        add(new Analog1DKeys(this.trigger, up, down));
+    }
+    
+    function addKeys2D(up:FlxKey, down:FlxKey, right:FlxKey, left:FlxKey)
+    {
+        add(new Analog2DKeys(this.trigger, up, down, right, left));
+    }
+    
+    function removeKeys1D(up:FlxKey, down:FlxKey)
+    {
+        for (input in this.inputs)
+        {
+            if (input is Analog1DKeys)
+            {
+                final input:Analog1DKeys = cast input;
+                if (input.up == up && input.down == down)
+                {
+                    this.remove(input);
+                    break;
+                }
+            }
+        }
+    }
+    
+    function removeKeys2D(up:FlxKey, down:FlxKey, right:FlxKey, left:FlxKey)
+    {
+        for (input in this.inputs)
+        {
+            if (input is Analog2DKeys)
+            {
+                final input:Analog2DKeys = cast input;
+                if (input.up == up
+                && input.down == down
+                && input.right == right
+                && input.left == left)
+                {
+                    this.remove(input);
+                    break;
+                }
+            }
+        }
+    }
+    
+    public function setGamepadID(id:FlxGamepadID)
+    {
+        for (input in this.inputs)
+        {
+            if (input.device == GAMEPAD)
+                input.deviceID = id.toDeviceID();
+        }
+    }
+    
     #if (flixel < "5.9.0")
     /**
      * See if this action has been triggered
@@ -177,243 +499,6 @@ private class FlxControlAnalogRaw extends FlxActionAnalog
         return triggered;
     }
     #end
-}
-
-/**
- * An analog control containing all the inputs associated with a single action
- */
-@:forward(x, y)
-// private 
-abstract FlxControlAnalog(FlxControlAnalogRaw) to FlxControlAnalogRaw
-{
-    // public var moved(get, never):Bool // TODO:
-    // inline function get_moved():Bool return true; // TODO:
-    
-    // public var justMoved(get, never):Bool // TODO:
-    // inline function justMoved():Bool return true; // TODO:
-    
-    // public var stopped(get, never):Bool // TODO:
-    // inline function get_stopped():Bool return true; // TODO:
-    
-    // public var justStopped(get, never):Bool // TODO:
-    // inline function get_justStopped():Bool return true; // TODO:
-    
-    inline public function new (name, ?callback)
-    {
-        this = new FlxControlAnalogRaw(name, callback);
-    }
-    
-    /**
-     * Adds the input to this control's list
-     */
-    public function add<TAction:EnumValue>(parent:FlxControls<TAction>, input:FlxControlInputType)
-    {
-        switch input
-        {
-            // Gamepad
-            case Gamepad(id) if (id == LEFT_TRIGGER || id == RIGHT_TRIGGER):
-                addGamepadInput(id, X, parent.gamepadID);
-            case Gamepad(id) if (id == LEFT_ANALOG_STICK || id == RIGHT_ANALOG_STICK):
-                addGamepadInput(id, EITHER, parent.gamepadID);
-            case Gamepad(found):
-                throw 'Internal Error - Unexpected Gamepad($found)';
-            
-            // Mouse
-            case Mouse(Drag(id, axis, scale, deadzone, invert)):
-                addMouseDrag(id ?? LEFT, axis ?? EITHER, scale ?? 0.1, deadzone ?? 0.1, invert ?? FlxAxes.NONE);
-            case Mouse(Position(axis)):
-                addMousePosition(axis);
-            case Mouse(Motion(axis, scale, deadzone, invert)):
-                addMouseMotion(axis ?? EITHER, scale ?? 0.1, deadzone ?? 0.1, invert ?? FlxAxes.NONE);
-            case Mouse(Button(found)):
-                throw 'Internal error - Unexpected Mouse(Button($found))';
-            
-            // Keys
-            case Keyboard(Multi(up, down, null, null)):
-                addKeys1D(up, down);
-            case Keyboard(Multi(up, down, right, left)):
-                addKeys2D(up, down, right, left);
-            case Keyboard(Lone(found)):
-                throw 'Internal error - Unexpected Keyboard($found)';
-            
-            // VPad
-            case VirtualPad(found):
-                throw 'Internal error - Unexpected VirtualPad($found)';
-        }
-    }
-    
-    /**
-     * Removes the input from this control's list
-     */
-    public function remove(input:FlxControlInputType)
-    {
-        switch input
-        {
-            // Gamepad
-            case Gamepad(id) if (id == LEFT_TRIGGER || id == RIGHT_TRIGGER):
-                removeGamepadInput(id, X);
-            case Gamepad(id) if (id == LEFT_ANALOG_STICK || id == RIGHT_ANALOG_STICK):
-                removeGamepadInput(id, EITHER);
-            case Gamepad(found):
-                throw 'Internal Error - Unexpected Gamepad($found)';
-            
-            // Mouse
-            case Mouse(Drag(id, axis, _, _, _)):
-                removeMouseDrag(id, axis);
-            case Mouse(Position(axis)):
-                removeMousePosition(axis);
-            case Mouse(Motion(axis, _, _, _)):
-                removeMouseMotion(axis);
-            case Mouse(Button(found)):
-                throw 'Internal error - Unexpected Mouse(Button($found))';
-            
-            // Keys
-            case Keyboard(Multi(up, down, null, null)):
-                removeKeys1D(up, down);
-            case Keyboard(Multi(up, down, right, left)):
-                removeKeys2D(up, down, right, left);
-            case Keyboard(Lone(found)):
-                throw 'Internal error - Unexpected Keyboard($found)';
-            
-            // VPad
-            case VirtualPad(found):
-                throw 'Internal error - Unexpected VirtualPad($found)';
-            case Keyboard(found):
-                throw 'Internal error - Unexpected Keyboard($found)';
-        }
-    }
-    
-    inline function addGamepadInput(inputID:FlxGamepadInputID, axis, gamepadID:FlxGamepadID)
-    {
-        this.addGamepad(inputID, MOVED, axis, gamepadID.toDeviceID());
-    }
-    
-    function removeGamepadInput(inputID:FlxGamepadInputID, axis)
-    {
-        final inputs:Array<FlxActionInputAnalog> = cast this.inputs;
-        for (input in inputs)
-        {
-            if (input.device == GAMEPAD
-            && inputID == (cast input.inputID)
-            && MOVED == (cast input.trigger)
-            && axis == input.axis)
-            {
-                this.remove(input);
-                break;
-            }
-        }
-    }
-    
-    inline function addMouseMotion(axis, scale = 0.1, deadZone = 0.1, invert = FlxAxes.NONE)
-    {
-        this.add(new AnalogMouseMove(MOVED, axis, scale, deadZone, invert));
-    }
-    
-    function removeMouseMotion(axis)
-    {
-        final inputs:Array<FlxActionInputAnalog> = cast this.inputs;
-        for (input in inputs)
-        {
-            if (input is AnalogMouseMove && axis == input.axis)
-            {
-                this.remove(input);
-                break;
-            }
-        }
-    }
-    
-    inline function addMousePosition(axis)
-    {
-        this.add(new AnalogMousePosition(MOVED, axis));
-    }
-    
-    function removeMousePosition(axis)
-    {
-        final inputs:Array<FlxActionInputAnalog> = cast this.inputs;
-        for (input in inputs)
-        {
-            if (input is AnalogMousePosition && axis == input.axis)
-            {
-                this.remove(input);
-                break;
-            }
-        }
-    }
-    
-    inline function addMouseDrag(buttonId, axis, scale = 0.1, deadZone = 0.1, invert = FlxAxes.NONE)
-    {
-        this.add(new AnalogMouseDrag(buttonId, MOVED, axis, scale, deadZone, invert));
-    }
-    
-    function removeMouseDrag(buttonId, axis)
-    {
-        final inputs:Array<FlxActionInputAnalog> = cast this.inputs;
-        for (input in inputs)
-        {
-            @:privateAccess
-            if (input is AnalogMouseDrag
-            && axis == input.axis
-            && (cast input:AnalogMouseDrag).button == buttonId)
-            {
-                this.remove(input);
-                break;
-            }
-        }
-    }
-    
-    public function addKeys1D(up:FlxKey, down:FlxKey)
-    {
-        this.add(new Analog1DKeys(this.trigger, up, down));
-    }
-    
-    public function addKeys2D(up:FlxKey, down:FlxKey, right:FlxKey, left:FlxKey)
-    {
-        this.add(new Analog2DKeys(this.trigger, up, down, right, left));
-    }
-    
-    public function removeKeys1D(up:FlxKey, down:FlxKey)
-    {
-        for (input in this.inputs)
-        {
-            if (input is Analog1DKeys)
-            {
-                final input:Analog1DKeys = cast input;
-                if (input.up == up && input.down == down)
-                {
-                    this.remove(input);
-                    break;
-                }
-            }
-        }
-    }
-    
-    public function removeKeys2D(up:FlxKey, down:FlxKey, right:FlxKey, left:FlxKey)
-    {
-        for (input in this.inputs)
-        {
-            if (input is Analog2DKeys)
-            {
-                final input:Analog2DKeys = cast input;
-                if (input.up == up
-                && input.down == down
-                && input.right == right
-                && input.left == left)
-                {
-                    this.remove(input);
-                    break;
-                }
-            }
-        }
-    }
-    
-    public function setGamepadID(id:FlxGamepadID)
-    {
-        for (input in this.inputs)
-        {
-            if (input.device == GAMEPAD)
-                input.deviceID = id.toDeviceID();
-        }
-    }
 }
 
 private class Analog1DKeys extends FlxActionInputAnalog
@@ -464,7 +549,9 @@ private class Analog2DKeys extends FlxActionInputAnalog
         #if FLX_KEYBOARD
         final newX = checkKey(right) - checkKey(left);
         final newY = checkKey(up) - checkKey(down);
-        updateValues(newX, newY);
+        
+        final scale = newX * newY == 0 ? 1 : (1 / FlxMath.SQUARE_ROOT_OF_TWO);
+        updateValues(newX * scale, newY * scale);
         #end
     }
     

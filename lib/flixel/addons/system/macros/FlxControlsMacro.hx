@@ -111,20 +111,21 @@ class FlxControlsMacro
         final actionCT = Context.getType(enumType.module + "." + enumType.name).toComplexType();
         final listCT = (macro: flixel.addons.input.FlxDigitalSet<$actionCT>);
         #else
-        final listCT = buildDigitalActionList(enumType, enumDataList);
+        final digitalSetCT = buildDigitalSet(enumType, enumDataList);
+        // final analogSetCT = buildAnalogSet(enumType, enumDataList);
         #end
         // Digital fields
         final fields = (macro class TempClass
         {
-            public var pressed     (get, never):$listCT;
-            public var released    (get, never):$listCT;
-            public var justPressed (get, never):$listCT;
-            public var justReleased(get, never):$listCT;
+            public var pressed     (get, never):$digitalSetCT;
+            public var released    (get, never):$digitalSetCT;
+            public var justPressed (get, never):$digitalSetCT;
+            public var justReleased(get, never):$digitalSetCT;
             
-            @:noCompletion inline function get_pressed     () { return cast listsByState[flixel.input.FlxInput.FlxInputState.PRESSED      ]; }
-            @:noCompletion inline function get_released    () { return cast listsByState[flixel.input.FlxInput.FlxInputState.RELEASED     ]; }
-            @:noCompletion inline function get_justPressed () { return cast listsByState[flixel.input.FlxInput.FlxInputState.JUST_PRESSED ]; }
-            @:noCompletion inline function get_justReleased() { return cast listsByState[flixel.input.FlxInput.FlxInputState.JUST_RELEASED]; }
+            @:noCompletion inline function get_pressed     () { return cast digitalSets[flixel.input.FlxInput.FlxInputState.PRESSED      ]; }
+            @:noCompletion inline function get_released    () { return cast digitalSets[flixel.input.FlxInput.FlxInputState.RELEASED     ]; }
+            @:noCompletion inline function get_justPressed () { return cast digitalSets[flixel.input.FlxInput.FlxInputState.JUST_PRESSED ]; }
+            @:noCompletion inline function get_justReleased() { return cast digitalSets[flixel.input.FlxInput.FlxInputState.JUST_RELEASED]; }
         }).fields;
         
         /** Helper to concat without creating a new array */
@@ -167,7 +168,7 @@ class FlxControlsMacro
         return null;
     }
     
-    static function buildDigitalActionList(action:EnumType, enumFields:Array<ActionFieldData>):ComplexType
+    static function buildDigitalSet(action:EnumType, enumFields:Array<ActionFieldData>):ComplexType
     {
         final name = 'FlxDigitalSet__${action.pack.join("_")}_${action.name}';
         
@@ -193,11 +194,48 @@ class FlxControlsMacro
             switch field.controlType
             {
                 case DIGITAL:
-                    final fields = field.createDigitalGetter();
+                    final fields = field.createGetter();
                     def.fields.push(fields[0]);
                     def.fields.push(fields[1]);
                 case ANALOG(_):
                 case ANALOG_XY(_, _):
+            }
+        }
+        
+        Context.defineType(def);
+        return TPath({pack: [], name: name});
+    }
+    
+    static function buildAnalogSet(action:EnumType, enumFields:Array<ActionFieldData>):ComplexType
+    {
+        final name = 'FlxAnalogSet__${action.pack.join("_")}_${action.name}';
+        
+        // Check whether the generated type already exists
+        try
+        {
+            Context.getType(name);
+            
+            // Return a `ComplexType` for the generated type
+            return TPath({pack: [], name: name});
+        }
+        catch (e) {} // The generated type doesn't exist yet
+        
+        final actionCT = enumFields[0].actionCT;
+        // define the type
+        final def = macro class $name { }
+        final listCT = (macro: flixel.addons.input.FlxAnalogSet<$actionCT>);
+        def.meta.push({ name:":forward", pos:Context.currentPos() });
+        def.kind = TDAbstract(listCT, [listCT], [listCT]);
+        
+        for (field in enumFields)
+        {
+            switch field.controlType
+            {
+                case DIGITAL:
+                case ANALOG(_) | ANALOG_XY(_, _):
+                    final fields = field.createGetter();
+                    def.fields.push(fields[0]);
+                    def.fields.push(fields[1]);
             }
         }
         
@@ -271,7 +309,7 @@ class ActionFieldData
         }
     }
     
-    public function createDigitalGetter():Array<Field>
+    public function createGetter():Array<Field>
     {
         final getterName = 'get_$name';
         final fields = (macro class TempClass
@@ -288,12 +326,12 @@ class ActionFieldData
     public function createAnalog1DField(arg:String):Array<Field>
     {
         // get or create the trigger type
-        final typeCt = switch arg
+        final typeCt = switch [arg]
         {
-            case "value":
-                (macro: flixel.addons.input.FlxAnalogSet.FlxControlAnalog1D);
+            case ["value"]:
+                (macro: flixel.addons.input.FlxAnalogSet.FlxAnalogSet1D<$actionCT>);
             case _:
-                createAnalog1DType(arg);
+                createAnalogSet1DType(arg, actionCT);
         }
         
         final getterName = 'get_$name';
@@ -301,7 +339,10 @@ class ActionFieldData
         {
             public var $name(get, never):$typeCt;
             @:noCompletion
-            inline function $getterName () { return cast analogSet.get($p{path}); }
+            inline function $getterName ()
+            {
+                return cast analogSets[$p{path}];
+            }
         }).fields;
         fields[0].doc = doc;
         
@@ -313,9 +354,9 @@ class ActionFieldData
         return inputs != null;
     }
     
-    static function createAnalog1DType(arg:String)
+    static function createAnalogSet1DType(arg:String, actionCT:ComplexType)
     {
-        final name = 'FlxControlAnalog1D__$arg';
+        final name = 'FlxAnalogSet1D__$arg';
         
         // Check whether the generated type already exists
         try
@@ -323,7 +364,7 @@ class ActionFieldData
             Context.getType(name);
             
             // Return a `ComplexType` for the generated type
-            return TPath({pack: [], name: name});
+            return TPath({ pack: [], name: name });
         }
         catch (e) {} // The generated type doesn't exist yet
         
@@ -332,18 +373,18 @@ class ActionFieldData
         // define the type
         final def = (macro class $name
         {
-            /** The value of this trigger **/
+            /** The value of this action **/
             public var $arg(get, never):Float;
-            public function $getterName():Float return this.x;
+            inline function $getterName():Float { @:privateAccess return this.control.x; }
         });
         
-        // def.meta.push({ name:":forward", pos:Context.currentPos() });
+        def.meta.push({ name:":forward", pos:Context.currentPos() });
         
-        final controlType = (macro: flixel.addons.input.FlxAnalogSet.FlxControlAnalog);
-        def.kind = TDAbstract(controlType, [controlType], [controlType]);
+        final setType = (macro: flixel.addons.input.FlxAnalogSet.FlxAnalogSet1DBase<$actionCT>);
+        def.kind = TDAbstract(setType, [setType], [setType]);
         
         Context.defineType(def);
-        return TPath({pack: [], name: name});
+        return TPath({ pack: [], name: name });
     }
     
     public function createAnalog2DField(argX:String, argY:String):Array<Field>
@@ -352,9 +393,9 @@ class ActionFieldData
         final typeCt = switch [argX, argY]
         {
             case ["x", "y"]:
-                (macro: flixel.addons.input.FlxAnalogSet.FlxControlAnalog2D);
+                (macro: flixel.addons.input.FlxAnalogSet.FlxAnalogSet2D<$actionCT>);
             case _:
-                createAnalog2DType(argX, argY);
+                createAnalogSet2DType(argX, argY, actionCT);
         }
         
         final getterName = 'get_$name';
@@ -362,16 +403,19 @@ class ActionFieldData
         {
             public var $name(get, never):$typeCt;
             @:noCompletion
-            inline function $getterName () { return cast analogSet.get($p{path}); }
+            inline function $getterName ()
+            {
+                return cast analogSets[$p{path}];
+            }
         }).fields;
         fields[0].doc = doc;
         
         return fields;
     }
     
-    static function createAnalog2DType(argX:String, argY:String)
+    static function createAnalogSet2DType(argX:String, argY:String, actionCT:ComplexType)
     {
-        final name = 'FlxControlAnalog2D__${argX}_${argY}';
+        final name = 'FlxAnalogSet2D__${argX}_${argY}';
         
         // Check whether the generated type already exists
         try
@@ -391,17 +435,17 @@ class ActionFieldData
         {
             /** The horizontal component of this joystick **/
             public var $argX(get, never):Float;
-            inline function $getterX():Float { return this.x; }
+            inline function $getterX():Float { @:privateAccess return this.control.x; }
             
             /** The vertical component of this joystick **/
             public var $argY(get, never):Float;
-            inline function $getterY():Float { return this.y; }
+            inline function $getterY():Float { @:privateAccess return this.control.y; }
         });
         
         def.meta.push({ name:":forward", pos:Context.currentPos() });
         
-        final controlType = (macro: flixel.addons.input.FlxAnalogSet.FlxControlAnalog);
-        def.kind = TDAbstract(controlType, [controlType], [controlType]);
+        final setType = (macro: flixel.addons.input.FlxAnalogSet.FlxAnalogSet2DBase<$actionCT>);
+        def.kind = TDAbstract(setType, [setType], [setType]);
         
         Context.defineType(def);
         return TPath({ pack: [], name: name });

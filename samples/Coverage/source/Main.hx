@@ -12,7 +12,7 @@ class Main extends openfl.display.Sprite
     {
         super();
         
-        addChild(new flixel.FlxGame(0, 0, BootState));
+        addChild(new flixel.FlxGame(0, 0, BootState, 4, 4));
     }
 }
 
@@ -43,10 +43,26 @@ class BootState extends flixel.FlxState
         FlxG.watch.addFunction("back"  , ()->controls.pressed.BACK  );
         FlxG.watch.addFunction("pause" , ()->controls.pressed.PAUSE );
         
+        FlxG.watch.addFunction("cam-up" , ()->{
+            // trace(controls.CAM.pressed);
+            return controls.CAM.pressed.up;
+        });
+        FlxG.watch.addFunction("cam-down" , ()->controls.CAM.pressed.down);
+        FlxG.watch.addFunction("cam-left" , ()->controls.CAM.pressed.left);
+        FlxG.watch.addFunction("cam-right" , ()->controls.CAM.pressed.right);
+        
         // // Check if multiple actions are pressed like so:
         FlxG.watch.addFunction("l/r"   , ()->controls.pressed.any([LEFT, RIGHT]));
         FlxG.watch.addFunction("u/d"   , ()->controls.pressed.any([UP, DOWN]));
         
+        controls.GAS.vroom;
+        controls.BREAKS.value;
+        
+        FlxG.watch.addFunction("cam2"   , function ()
+        {
+            final p = controls.CAM2;
+            return '${p.x2} | ${p.y2}';
+        });
         FlxG.watch.addFunction("cam"   , function ()
         {
             final p = controls.CAM;
