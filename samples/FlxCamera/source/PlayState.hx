@@ -153,7 +153,8 @@ class PlayState extends FlxState
 	
 	function setStyle(delta:Int)
 	{
-		final nextStyleIndex = (followStyles.indexOf(FlxG.camera.style) + delta) % followStyles.length;
+		final len = followStyles.length;
+		final nextStyleIndex = (followStyles.indexOf(FlxG.camera.style) + delta + len) % len;
 		FlxG.camera.follow(player, followStyles[nextStyleIndex], FlxG.camera.followLerp);
 		
 		deadzoneOverlay.redraw(FlxG.camera);
