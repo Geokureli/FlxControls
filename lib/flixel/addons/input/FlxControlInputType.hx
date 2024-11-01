@@ -151,7 +151,10 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
             case Mouse(Button(id)):
                 false;
                 
-            case Mouse(_):
+            case Mouse(Motion(_, _, _, _))
+                | Mouse(Position(_))
+                | Mouse(Drag(_, _, _, _, _))
+                | Mouse(Wheel(_)):
                 true;
                 
             case Keyboard(Lone(_)) | VirtualPad(Lone(_)) | Gamepad(Lone(_)):
@@ -198,7 +201,10 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
             case Mouse(Button(id)):
                 true;
                 
-            case Mouse(_):
+            case Mouse(Motion(_, _, _, _))
+                | Mouse(Position(_))
+                | Mouse(Drag(_, _, _, _, _))
+                | Mouse(Wheel(_)):
                 false;
                 
             case Keyboard(Lone(_)) | VirtualPad(Lone(_)):
@@ -234,6 +240,10 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
                 
             case [Mouse(Position(axis1)), Mouse(Position(axis2))]:
                 axis1 == axis2;
+                
+                
+            case [Mouse(Wheel(_)), Mouse(Wheel(_))]:
+                true;
                 
             case [Keyboard(Lone(id1)), Keyboard(Lone(id2))]:
                 id1 == id2;
@@ -360,6 +370,8 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
                 "mouse";
             case Mouse(Drag(_)):
                 "mouse-drag";
+            case Mouse(Wheel(_)):
+                "mouse-wheel";
             default:
                 "";
         }
@@ -463,7 +475,12 @@ enum FlxMouseInputType
      */
     Button(?id:FlxMouseButtonID);
     
-    // TODO: Wheel, or scroll x/y
+    /**
+     * @param   scale  Multiplies the value
+     */
+    Wheel(?scale:Float);// TODO: Unify values on Html5/C
+    
+    // TODO: scroll?
 }
 
 enum abstract FlxVirtualPadInputID(String)

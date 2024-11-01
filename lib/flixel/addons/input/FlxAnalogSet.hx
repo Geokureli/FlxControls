@@ -297,7 +297,7 @@ class FlxAnalogDirections2D<TAction:EnumValue>
  */
 class FlxControlAnalog extends FlxActionAnalog
 {
-    var trigger:FlxAnalogState;
+    final trigger:FlxAnalogState;
     
     public function new (name, trigger, ?callback)
     {
@@ -335,6 +335,8 @@ class FlxControlAnalog extends FlxActionAnalog
                 add(new AnalogMousePosition(this.trigger, axis));
             case Mouse(Motion(axis, scale, deadzone, invert)):
                 add(new AnalogMouseMove(this.trigger, axis ?? EITHER, scale ?? 0.1, deadzone ?? 0.1, invert ?? FlxAxes.NONE));
+            case Mouse(Wheel(scale)):
+                add(new AnalogMouseWheelDelta(this.trigger, scale ?? 0.1));
             case Mouse(Button(found)):
                 throw 'Internal error - Unexpected Mouse(Button($found))';
             
@@ -390,6 +392,8 @@ class FlxControlAnalog extends FlxActionAnalog
                 removeMousePosition(axis);
             case Mouse(Motion(axis, _, _, _)):
                 removeMouseMotion(axis);
+            case Mouse(Wheel(_)):
+                removeMouseWheel();
             case Mouse(Button(found)):
                 throw 'Internal error - Unexpected Mouse(Button($found))';
             
@@ -473,6 +477,19 @@ class FlxControlAnalog extends FlxActionAnalog
             if (input is AnalogMouseDrag
             && axis == input.axis
             && (cast input:AnalogMouseDrag).button == buttonId)
+            {
+                this.remove(input);
+                break;
+            }
+        }
+    }
+    
+    function removeMouseWheel()
+    {
+        final inputs:Array<FlxActionInputAnalog> = cast this.inputs;
+        for (input in inputs)
+        {
+            if (input is AnalogMouseWheelDelta)
             {
                 this.remove(input);
                 break;
@@ -924,5 +941,21 @@ private class AnalogMousePosition extends FlxActionInputAnalogMousePosition
             x = y;
         
         super.updateValues(x, y);
+    }
+}
+
+private class AnalogMouseWheelDelta extends FlxActionInputAnalog
+{
+    final scale:Float;
+    
+    public function new (trigger, scale = 0.1)
+    {
+        this.scale = scale;
+        super(MOUSE, -1, trigger, X);
+    }
+    
+    override function updateValues(x:Float, y:Float)
+    {
+        super.updateValues(FlxG.mouse.wheel * scale, 0);
     }
 }
