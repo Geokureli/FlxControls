@@ -669,7 +669,7 @@ private class Analog1DKeys extends FlxActionInputAnalog
     {
         this.up = up;
         this.down = down;
-        super(KEYBOARD, -1, cast trigger, X);
+        super(KEYBOARD, -1, trigger, X);
     }
     
     override function update()
@@ -695,7 +695,7 @@ private class Analog2DKeys extends FlxActionInputAnalog
         this.right = right;
         this.left = left;
         
-        super(KEYBOARD, -1, cast trigger, EITHER);
+        super(KEYBOARD, -1, trigger, EITHER);
     }
     
     override function update()
@@ -741,7 +741,7 @@ private class Analog1DGamepad extends FlxActionInputAnalog
     {
         this.up = up;
         this.down = down;
-        super(GAMEPAD, -1, cast trigger, X, gamepadID.toDeviceID());
+        super(GAMEPAD, -1, trigger, X, gamepadID.toDeviceID());
     }
     
     override function update()
@@ -767,7 +767,7 @@ private class Analog2DGamepad extends FlxActionInputAnalog
         this.right = right;
         this.left = left;
         
-        super(GAMEPAD, -1, cast trigger, EITHER, gamepadID.toDeviceID());
+        super(GAMEPAD, -1, trigger, EITHER, gamepadID.toDeviceID());
     }
     
     override function update()
@@ -797,7 +797,7 @@ private class Analog1DVPad extends FlxActionInputAnalog
         this.proxies = proxies;
         this.up = up;
         this.down = down;
-        super(IFLXINPUT_OBJECT, -1, cast trigger, X);
+        super(IFLXINPUT_OBJECT, -1, trigger, X);
     }
     
     override function update()
@@ -831,7 +831,7 @@ private class Analog2DVPad extends FlxActionInputAnalog
         this.right = right;
         this.left = left;
         
-        super(IFLXINPUT_OBJECT, -1, cast trigger, EITHER);
+        super(IFLXINPUT_OBJECT, -1, trigger, EITHER);
     }
     
     override function update()
@@ -852,10 +852,10 @@ private class Analog2DVPad extends FlxActionInputAnalog
 
 private class AnalogMouseDrag extends FlxActionInputAnalogClickAndDragMouseMotion
 {
-    public function new (buttonID, trigger, axis = EITHER, scale = 0.1, deadZone = 0.1, invert = FlxAxes.NONE)
+    public function new (buttonID, trigger, axis = EITHER, scale = 0.1, deadzone = 0.1, invert = FlxAxes.NONE)
     {
         // If only tracking y, set x to y, because 1d controls always check x
-        super(buttonID, trigger, axis, Math.ceil(1.0 / scale), deadZone, invert.y, invert.x);
+        super(buttonID, trigger, axis, Math.ceil(1.0 / scale), deadzone, invert.y, invert.x);
     }
     
     override function updateValues(x:Float, y:Float)
@@ -869,9 +869,9 @@ private class AnalogMouseDrag extends FlxActionInputAnalogClickAndDragMouseMotio
 
 private class AnalogMouseMove extends FlxActionInputAnalogMouseMotion
 {
-    public function new (trigger, axis = EITHER, scale = 0.1, deadZone = 0.1, invert = FlxAxes.NONE)
+    public function new (trigger, axis = EITHER, scale = 0.1, deadzone = 0.1, invert = FlxAxes.NONE)
     {
-        super(trigger, axis, Math.ceil(1.0 / scale), deadZone, invert.y, invert.x);
+        super(trigger, axis, Math.ceil(1.0 / scale), deadzone, invert.y, invert.x);
     }
     
     override function updateValues(x:Float, y:Float)
