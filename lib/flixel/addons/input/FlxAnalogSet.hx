@@ -28,32 +28,39 @@ abstract FlxAnalogSet1D<TAction:EnumValue>(FlxAnalogSet1DBase<TAction>) to FlxAn
 abstract FlxAnalogSet1DBase<TAction:EnumValue>(FlxAnalogSet<TAction>) to FlxAnalogSet<TAction>
 {
     /**
-     * Helper for extracting digital directional states from a 2D analog action.
-     * For instance, if the action's `y` is positive, `pressed.up` will be `true`
+     * Helper for extracting digital directional states from an analog action.
+     * For instance, if the action's `value` is positive, `pressed.up` will be `true`
      */
     public var pressed(get, never):FlxAnalogDirections1D<TAction>;
     inline function get_pressed() return this.pressed;
     
     /**
-     * Helper for extracting digital directional states from a 2D analog action.
-     * For instance, if the action's `y` just became positive, `justPressed.up` will be `true`
+     * Helper for extracting digital directional states from an analog action.
+     * For instance, if the action's `value` just became positive, `justPressed.up` will be `true`
      */
     public var justPressed(get, never):FlxAnalogDirections1D<TAction>;
     inline function get_justPressed() return this.justPressed;
     
     /**
-     * Helper for extracting digital directional states from a 2D analog action.
-     * For instance, if the action's `y` is `0` or negative, `released.up` will be `true`
+     * Helper for extracting digital directional states from an analog action.
+     * For instance, if the action's `value` is `0` or negative, `released.up` will be `true`
      */
     public var released(get, never):FlxAnalogDirections1D<TAction>;
     inline function get_released() return this.released;
     
     /**
-     * Helper for extracting digital directional states from a 2D analog action.
-     * For instance, if the action's `y` just became `0` or negative, `justReleased.up` will be `true`
+     * Helper for extracting digital directional states from an analog action.
+     * For instance, if the action's `value` just became `0` or negative, `justReleased.up` will be `true`
      */
     public var justReleased(get, never):FlxAnalogDirections1D<TAction>;
     inline function get_justReleased() return this.justReleased;
+    
+    /**
+     * Helper for extracting digital directional states from an analog action.
+     * It is similar to `justPressed` but holding the input for 0.5s will make it fire every 0.1s
+     */
+    public var holdRepeat(get, never):FlxAnalogDirections1D<TAction>;
+    inline function get_holdRepeat() return this.holdRepeat;
 }
 
 @:forward
@@ -98,6 +105,54 @@ abstract FlxAnalogSet2DBase<TAction:EnumValue>(FlxAnalogSet<TAction>) to FlxAnal
      */
     public var justReleased(get, never):FlxAnalogDirections2D<TAction>;
     inline function get_justReleased() return this.justReleased;
+    
+    /**
+     * Helper for extracting digital directional states from a 2D analog action.
+     * It is similar to `justPressed` but holding the input for 0.5s will make it fire every 0.1s
+     */
+    public var holdRepeat(get, never):FlxAnalogDirections2D<TAction>;
+    inline function get_holdRepeat() return this.holdRepeat;
+}
+
+private class DirectionInput extends FlxInput<FlxDirection>
+{
+    inline static var INITIAL_DELAY = 0.5;
+    inline static var REPEAT_DELAY = 0.1;
+    
+    var timer:Float = 0;
+    var repeatTriggered = false;
+    
+    public function triggerRepeat():Bool
+    {
+        return repeatTriggered;
+    }
+    
+    public function updateWithState(isPressed:Bool)
+    {
+        repeatTriggered = false;
+        if (pressed)
+        {
+            timer += FlxG.elapsed;
+            repeatTriggered = timer >= REPEAT_DELAY;
+            if (repeatTriggered)
+                timer -= REPEAT_DELAY;
+        }
+        
+        if (isPressed && released)
+        {
+            press();
+            timer = REPEAT_DELAY - INITIAL_DELAY;
+            repeatTriggered = true;
+        }
+        
+        if (!isPressed && pressed)
+        {
+            release();
+            timer = 0;
+        }
+        
+        update();
+    }
 }
 
 /**
@@ -112,11 +167,12 @@ class FlxAnalogSet<TAction:EnumValue>
     final justPressed:FlxAnalogDirections2D<TAction>;
     final released:FlxAnalogDirections2D<TAction>;
     final justReleased:FlxAnalogDirections2D<TAction>;
+    final holdRepeat:FlxAnalogDirections2D<TAction>;
     
-    var upInput = new FlxInput<FlxDirection>(UP);
-    var downInput = new FlxInput<FlxDirection>(DOWN);
-    var leftInput = new FlxInput<FlxDirection>(LEFT);
-    var rightInput = new FlxInput<FlxDirection>(RIGHT);
+    var upInput = new DirectionInput(UP);
+    var downInput = new DirectionInput(DOWN);
+    var leftInput = new DirectionInput(LEFT);
+    var rightInput = new DirectionInput(RIGHT);
     
     var control:FlxControlAnalog;
     var parent:FlxControls<TAction>;
@@ -129,10 +185,11 @@ class FlxAnalogSet<TAction:EnumValue>
         name = '$namePrefix-analogSet';
         control = new FlxControlAnalog('$namePrefix-control', MOVED);
         
-        pressed      = new FlxAnalogDirections2D(this, PRESSED      );
-        released     = new FlxAnalogDirections2D(this, RELEASED     );
-        justPressed  = new FlxAnalogDirections2D(this, JUST_PRESSED );
-        justReleased = new FlxAnalogDirections2D(this, JUST_RELEASED);
+        pressed      = new FlxAnalogDirections2D(this, (i)->i.hasState(PRESSED      ));
+        released     = new FlxAnalogDirections2D(this, (i)->i.hasState(RELEASED     ));
+        justPressed  = new FlxAnalogDirections2D(this, (i)->i.hasState(JUST_PRESSED ));
+        justReleased = new FlxAnalogDirections2D(this, (i)->i.hasState(JUST_RELEASED));
+        holdRepeat   = new FlxAnalogDirections2D(this, (i)->i.triggerRepeat());
     }
     
     function destroy()
@@ -143,27 +200,17 @@ class FlxAnalogSet<TAction:EnumValue>
         justPressed.destroy();
         released.destroy();
         justReleased.destroy();
+        holdRepeat.destroy();
     }
     
     function update()
     {
         control.update();
         
-        upInput.update();
-        if (control.y > 0 && upInput.released) upInput.press();
-        if (control.y <= 0 && upInput.pressed) upInput.release();
-        
-        downInput.update();
-        if (control.y < 0 && downInput.released) downInput.press();
-        if (control.y >= 0 && downInput.pressed) downInput.release();
-        
-        rightInput.update();
-        if (control.x > 0 && rightInput.released) rightInput.press();
-        if (control.x <= 0 && rightInput.pressed) rightInput.release();
-        
-        leftInput.update();
-        if (control.x < 0 && leftInput.released) leftInput.press();
-        if (control.x >= 0 && leftInput.pressed) leftInput.release();
+        upInput.updateWithState(control.y > 0);
+        downInput.updateWithState(control.y < 0);
+        rightInput.updateWithState(control.x > 0);
+        leftInput.updateWithState(control.x < 0);
     }
     
     /**
@@ -210,32 +257,33 @@ class FlxAnalogDirections2D<TAction:EnumValue>
 {
     /** The digital up component of this 2D action **/
     public var up(get, never):Bool;
-    function get_up() return set.upInput.hasState(state);
+    inline function get_up() return func(set.upInput);
     
     /** The digital down component of this 2D action **/
     public var down(get, never):Bool;
-    function get_down() return set.downInput.hasState(state);
+    inline function get_down() return func(set.downInput);
     
     /** The digital left component of this 2D action **/
     public var left(get, never):Bool;
-    function get_left() return set.leftInput.hasState(state);
+    inline function get_left() return func(set.leftInput);
     
     /** The digital right component of this 2D action **/
     public var right(get, never):Bool;
-    function get_right() return set.rightInput.hasState(state);
+    inline function get_right() return func(set.rightInput);
     
     var set:FlxAnalogSet<TAction>;
-    final state:FlxInputState;
+    var func:(DirectionInput)->Bool;
     
-    function new(set, state)
+    function new(set, func)
     {
         this.set = set;
-        this.state = cast state;
+        this.func = func;
     }
     
     function destroy()
     {
         this.set = null;
+        this.func = null;
     }
     
     public function toString()
