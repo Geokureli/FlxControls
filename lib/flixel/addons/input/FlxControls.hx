@@ -286,6 +286,20 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
     }
     
     /**
+     * Returns a device specific id for every input that can be attached to an action. For gamepads it will use
+     * identifiers such as `WII_REMOTE(A)` or `PS4(SQUARE)`. For keyboard, the button label is returned.
+     * for "Multi button" inputs (like analog WASD), an array is returned.
+     * 
+     * @param   action  The target action
+     * @param   device  Used to filter the list results
+     */
+    public function listMappedInputsFor(action:TAction, device = FlxInputDevice.ALL)
+    {
+        final gamepad = getActiveGamepad();
+        return listInputsFor(action, device).map((input)->input.getMappedInput(gamepad));
+    }
+    
+    /**
      * Returns a list of all inputs currently added to the specified action
      * 
      * @param   action  The target action

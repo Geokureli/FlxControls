@@ -1,5 +1,6 @@
 package;
 
+import input.PlayerControls;
 import haxe.EnumTools;
 import flixel.FlxCamera;
 import flixel.FlxG;
@@ -68,8 +69,12 @@ class PlayState extends FlxState
 		player = new PlayerOrb(levelMinX + levelWidth / 2, levelMinY + levelHeight / 2);
 		add(player);
 		// if the player is using a virtual pad, add it to the state
-		if (player.controls.virtualPad != null)
-			add(player.controls.virtualPad);
+		if (FlxG.html5.onMobile)
+		{
+			final pad = new VirtualPad();
+			player.controls.setVirtualPad(pad);
+			add(pad);
+		}
 		
 		// Other orbs
 		for (i in 0...5)
