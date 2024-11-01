@@ -5,8 +5,10 @@ import flixel.addons.input.FlxControlInputType;
 import flixel.addons.input.FlxControlInputType.FlxMouseInputType.Motion as MouseMove;
 import flixel.addons.input.FlxControlInputType.FlxMouseInputType.Motion as MouseDrag;
 import flixel.addons.input.FlxControlInputType.FlxKeyInputType.Multi as MultiKey;
+import flixel.addons.input.FlxControlInputType.FlxKeyInputType.Arrows as ArrowKeys;
 import flixel.addons.input.FlxControlInputType.FlxGamepadInputType.Multi as MultiPad;
 import flixel.addons.input.FlxControlInputType.FlxVirtualPadInputType.Multi as MultiVPad;
+import flixel.addons.input.FlxControlInputType.FlxVirtualPadInputType.Arrows as VPadArrows;
 import flixel.addons.input.FlxControlInputType.FlxVirtualPadInputID as VPad;
 import flixel.input.gamepad.FlxGamepadInputID as GPad;
 import flixel.input.keyboard.FlxKey as Key;
@@ -27,8 +29,8 @@ enum Action
     /** Moves the player right, also used to navigate menus */
     @:inputs([Key.RIGHT, Key.D, DPAD_RIGHT, LEFT_STICK_DIGITAL_RIGHT, VPad.RIGHT ]) RIGHT;
     /** A test action */
-    @:inputs([RIGHT_ANALOG_STICK, MouseMove(), [K, I, L, J], MultiPad(B, X, A, Y), MultiVPad(A, Y, X, B)]) @:analog(x2, y2) CAM2;
-    @:inputs([RIGHT_ANALOG_STICK, MouseMove(), [K, I, L, J], MultiPad(B, X, A, Y), MultiVPad(A, Y, X, B)]) @:analog( x,  y) CAM;
+    @:inputs([RIGHT_ANALOG_STICK, MouseMove(), [I, K, L, J], MultiPad(X, B, A, Y), VPadArrows]) @:analog(x2, y2) CAM2;
+    @:inputs([RIGHT_ANALOG_STICK, MouseMove(), [I, K, L, J], MultiPad(X, B, A, Y), VPadArrows]) @:analog( x,  y) CAM;
     @:inputs([RIGHT_TRIGGER]) @:analog(vroom) GAS;
     @:inputs([LEFT_TRIGGER])  @:analog(value) BREAKS;
 }

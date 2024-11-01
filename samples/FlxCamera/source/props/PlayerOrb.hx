@@ -41,16 +41,16 @@ class PlayerOrb extends Orb
 		
 		// apply impusles to the body based on key presses
 		
-		if (controls.pressed.LEFT)
+		if (controls.MOVE.pressed.left)
 			applyImpulseXY(-IMPULSE, 0);
 		
-		if (controls.pressed.DOWN)
+		if (controls.MOVE.pressed.down)
 			applyImpulseXY(0, IMPULSE);
 		
-		if (controls.pressed.RIGHT)
+		if (controls.MOVE.pressed.right)
 			applyImpulseXY(IMPULSE, 0);
 		
-		if (controls.pressed.UP)
+		if (controls.MOVE.pressed.up)
 			applyImpulseXY(0, -IMPULSE);
 	}
 	

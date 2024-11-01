@@ -74,13 +74,13 @@ class HUD extends FlxGroup
 			final label = controls.listInputLabelsFor(input, device)[0];
 			if (label == null)
 				throw 'Missing label for input $input';
-			return label.toUpperCase();
+			return '${label.split(",").map((s)->'[${s.toUpperCase()}]').join(" or ")}';
 		}
 		
-		infoStyle.text = '[${label(STYLE_NEXT)}] or [${label(STYLE_PREV)}] to change follow style.';
-		infoLerp.text = '[${label(LERP_UP)}] or [${label(LERP_DOWN)}] to change lerp.';
-		infoLead.text = '[${label(LEAD_UP)}] or [${label(LEAD_DOWN)}] to change lead.';
-		infoZoom.text = '[${label(ZOOM_IN)}] or [${label(ZOOM_OUT)}] to change zoom.';
+		infoStyle.text = '${label(STYLE)} to change follow style.';
+		infoLerp.text = '${label(LERP)} to change lerp.';
+		infoLead.text = '${label(LEAD)} to change lead.';
+		infoZoom.text = '${label(ZOOM)} to change zoom.';
 		
 		lastActiveDevice = device;
 	}

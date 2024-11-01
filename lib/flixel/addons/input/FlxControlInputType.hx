@@ -126,11 +126,26 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
             
             case Gamepad(Multi(_, _, _, _)):
                 true;
+            
+            case Gamepad(DPad):
+                true;
+            
+            case Gamepad(Face):
+                true;
                 
             case Keyboard(Multi(_, _, _, _)):
                 true;
                 
+            case Keyboard(Arrows):
+                true;
+                
+            case Keyboard(WASD):
+                true;
+                
             case VirtualPad(Multi(_, _, _, _)):
+                true;
+            
+            case VirtualPad(Arrows):
                 true;
                 
             case Mouse(Button(id)):
@@ -139,7 +154,7 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
             case Mouse(_):
                 true;
                 
-            case Keyboard(Lone(_)) | VirtualPad(_) | Gamepad(_):
+            case Keyboard(Lone(_)) | VirtualPad(Lone(_)) | Gamepad(Lone(_)):
                 false;
         }
     }
@@ -159,10 +174,25 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
             case Gamepad(Multi(_, _, _, _)):
                 false;
                 
+            case Gamepad(DPad):
+                false;
+                
+            case Gamepad(Face):
+                false;
+                
             case Keyboard(Multi(_, _, _, _)):
                 false;
                 
+            case Keyboard(Arrows):
+                false;
+                
+            case Keyboard(WASD):
+                false;
+                
             case VirtualPad(Multi(_, _, _, _)):
+                false;
+                
+            case VirtualPad(Arrows):
                 false;
                 
             case Mouse(Button(id)):
@@ -171,7 +201,7 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
             case Mouse(_):
                 false;
                 
-            case Keyboard(_) | VirtualPad(_) | Gamepad(_):
+            case Keyboard(Lone(_)) | VirtualPad(Lone(_)):
                 true;
         }
     }
@@ -188,6 +218,9 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
                 && down1 == down2
                 && right1 == right2
                 && left1 == left2;
+                
+            case [Gamepad(DPad), Gamepad(DPad)] | [Gamepad(Face), Gamepad(Face)]:
+                true;
                 
             case [Mouse(Button(id1)), Mouse(Button(id2))]:
                 id1 == id2;
@@ -210,6 +243,9 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
                 && down1 == down2
                 && right1 == right2
                 && left1 == left2;
+                
+            case [Keyboard(WASD), Keyboard(WASD)] | [Keyboard(Arrows), Keyboard(Arrows)]:
+                true;
                 
             case [VirtualPad(Lone(id1)), VirtualPad(Lone(id2))]:
                 id1 == id2;
@@ -272,26 +308,48 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
             return id.toString();
         }
         
+        function vpad(id:FlxVirtualPadInputID)
+        {
+            return cast id;
+        }
+        
         return switch this
         {
             // Gamepad
             case Gamepad(Lone(id)):
                 gPad(id);
             case Gamepad(Multi(up, down, null, null)):
-                gPad(up) + ", " + gPad(down);
+                gPad(up) + "," + gPad(down);
             case Gamepad(Multi(up, down, right, left)):
-                gPad(up) + ", " + gPad(down) + ", " + gPad(up) + ", " + gPad(down);
+                gPad(up) + "," + gPad(down) + "," + gPad(right) + "," + gPad(left);
+            case Gamepad(DPad):
+                "d-pad";
+            case Gamepad(Face):
+                "abxy";
             
             // Keyboard
             case Keyboard(Lone(id)):
                 key(id);
             case Keyboard(Multi(up, down, null, null)):
-                key(up) + ", " + key(down);
+                key(up) + "," + key(down);
             case Keyboard(Multi(up, down, right, left)):
-                key(up) + ", " + key(down) + ", " + key(up) + ", " + key(down);
-                
-            case VirtualPad(id):
-                cast id;
+                key(up) + "," + key(down) + "," + key(right) + "," + key(left);
+            case Keyboard(WASD):
+                "wasd";
+            case Keyboard(Arrows):
+                "arrows";
+            
+            // Virtual Pad
+            case VirtualPad(Lone(id)):
+                vpad(id);
+            case VirtualPad(Multi(up, down, null, null)):
+                vpad(up) + "," + vpad(down);
+            case VirtualPad(Multi(up, down, right, left)):
+                vpad(up) + "," + vpad(down) + "," + vpad(right) + "," + vpad(left);
+            case VirtualPad(Arrows):
+                "arrows";
+            
+            // Mouse
             case Mouse(Button(LEFT)):
                 "click";
             case Mouse(Button(RIGHT)):
@@ -319,6 +377,16 @@ enum FlxKeyInputType
      * Used to define analog-like behavior using multiple digital inputs
      */
     Multi(up:FlxKey, down:FlxKey, ?right:FlxKey, ?left:FlxKey);
+    
+    /**
+     * Easy way to add arrows keys as a single analog input
+     */
+    Arrows;
+    
+    /**
+     * Easy way to add WASD keys as a single analog input
+     */
+    WASD;
 }
 
 enum FlxGamepadInputType
@@ -332,6 +400,18 @@ enum FlxGamepadInputType
      * Used to define analog-like behavior using multiple digital inputs
      */
     Multi(up:FlxGamepadInputID, down:FlxGamepadInputID, ?right:FlxGamepadInputID, ?left:FlxGamepadInputID);
+    
+    /**
+     * Easy way to add D-pad buttons as a single analog input
+     */
+    DPad;
+    
+    /**
+     * Easy way to add face buttons (i.e.: ABXY) as a single analog input
+     */
+    Face;
+    
+    // LeftDigital;
 }
 
 enum FlxVirtualPadInputType
@@ -345,6 +425,11 @@ enum FlxVirtualPadInputType
      * Used to define analog-like behavior using multiple digital inputs
      */
     Multi(up:FlxVirtualPadInputID, down:FlxVirtualPadInputID, ?right:FlxVirtualPadInputID, ?left:FlxVirtualPadInputID);
+    
+    /**
+     * Easy way to add arrows buttons as a single analog input
+     */
+    Arrows;
 }
 
 enum FlxMouseInputType

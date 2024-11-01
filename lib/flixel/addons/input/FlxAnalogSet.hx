@@ -323,6 +323,10 @@ class FlxControlAnalog extends FlxActionAnalog
                 addGamepad1D(up, down, parent.gamepadID);
             case Gamepad(Multi(up, down, right, left)):
                 addGamepad2D(up, down, right, left, parent.gamepadID);
+            case Gamepad(DPad):
+                addGamepad2D(DPAD_UP, DPAD_DOWN, DPAD_RIGHT, DPAD_LEFT, parent.gamepadID);
+            case Gamepad(Face):
+                addGamepad2D(Y, A, B, X, parent.gamepadID);
             
             // Mouse
             case Mouse(Drag(id, axis, scale, deadzone, invert)):
@@ -339,6 +343,10 @@ class FlxControlAnalog extends FlxActionAnalog
                 addKeys1D(up, down);
             case Keyboard(Multi(up, down, right, left)):
                 addKeys2D(up, down, right, left);
+            case Keyboard(Arrows):
+                addKeys2D(UP, DOWN, RIGHT, LEFT);
+            case Keyboard(WASD):
+                addKeys2D(W, S, D, A);
             case Keyboard(Lone(found)):
                 throw 'Internal error - Unexpected Keyboard($found)';
             
@@ -347,6 +355,8 @@ class FlxControlAnalog extends FlxActionAnalog
                 @:privateAccess addVPad1D(parent.vPadProxies, up, down);
             case VirtualPad(Multi(up, down, right, left)):
                 @:privateAccess addVPad2D(parent.vPadProxies, up, down, right, left);
+            case VirtualPad(Arrows):
+                @:privateAccess addVPad2D(parent.vPadProxies, UP, DOWN, RIGHT, LEFT);
             case VirtualPad(Lone(found)):
                 throw 'Internal error - Unexpected VirtualPad($found)';
         }
@@ -368,6 +378,8 @@ class FlxControlAnalog extends FlxActionAnalog
                 removeGamepad1D(up, down);
             case Gamepad(Multi(up, down, right, left)):
                 removeGamepad2D(up, down, right, left);
+            case Gamepad(DPad):
+                removeGamepad2D(DPAD_UP, DPAD_DOWN, DPAD_RIGHT, DPAD_LEFT);
             case Gamepad(found):
                 throw 'Internal Error - Unexpected Gamepad($found)';
             
@@ -386,6 +398,10 @@ class FlxControlAnalog extends FlxActionAnalog
                 removeKeys1D(up, down);
             case Keyboard(Multi(up, down, right, left)):
                 removeKeys2D(up, down, right, left);
+            case Keyboard(Arrows):
+                removeKeys2D(UP, DOWN, RIGHT, LEFT);
+            case Keyboard(WASD):
+                removeKeys2D(W, S, D, A);
             case Keyboard(Lone(found)):
                 throw 'Internal error - Unexpected Keyboard(Lone($found))';
             
@@ -394,6 +410,8 @@ class FlxControlAnalog extends FlxActionAnalog
                 removeVPad1D(up, down);
             case VirtualPad(Multi(up, down, right, left)):
                 removeVPad2D(up, down, right, left);
+            case VirtualPad(Arrows):
+                removeVPad2D(UP, DOWN, RIGHT, LEFT);
             case VirtualPad(Lone(found)):
                 throw 'Internal error - Unexpected VirtualPad(Lone($found))';
         }
@@ -401,21 +419,21 @@ class FlxControlAnalog extends FlxActionAnalog
     
     inline function addGamepadInput(inputID:FlxGamepadInputID, axis, gamepadID:FlxGamepadID)
     {
-        addGamepad(inputID, this.trigger, axis, gamepadID.toDeviceID());
+        add(new AnalogGamepadStick(inputID, this.trigger, axis, gamepadID.toDeviceID()));
     }
     
     function removeGamepadInput(inputID:FlxGamepadInputID, axis)
     {
-        final inputs:Array<FlxActionInputAnalog> = cast this.inputs;
-        for (input in inputs)
+        for (input in this.inputs)
         {
-            if (input.device == GAMEPAD
-            && inputID == (cast input.inputID)
-            && this.trigger == (cast input.trigger)
-            && axis == input.axis)
+            if (input is AnalogGamepadStick)
             {
-                this.remove(input);
-                break;
+                final input:AnalogGamepadStick = cast input;
+                if (input.inputID == inputID && input.axis == axis)
+                {
+                    this.remove(input);
+                    break;
+                }
             }
         }
     }
@@ -750,6 +768,14 @@ private class Analog1DGamepad extends FlxActionInputAnalog
         final newX = checkPad(up, deviceID) - checkPad(down, deviceID);
         updateValues(newX, 0);
         #end
+    }
+}
+
+private class AnalogGamepadStick extends FlxActionInputAnalogGamepad
+{
+    override function updateValues(x:Float, y:Float)
+    {
+        super.updateValues(x, -y);
     }
 }
 
