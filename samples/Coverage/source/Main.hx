@@ -12,7 +12,7 @@ class Main extends openfl.display.Sprite
     {
         super();
         
-        addChild(new flixel.FlxGame(0, 0, BootState, 4, 4));
+        addChild(new flixel.FlxGame(0, 0, BootState, 20, 20));
     }
 }
 
@@ -37,14 +37,17 @@ class BootState extends flixel.FlxState
         FlxG.watch.addFunction("down"  , ()->controls.pressed.DOWN  );
         FlxG.watch.addFunction("left"  , ()->controls.pressed.LEFT  );
         FlxG.watch.addFunction("right" , ()->controls.pressed.RIGHT );
+        FlxG.watch.addFunction("right-rp" , ()->controls.holdRepeat.RIGHT );
         
         FlxG.watch.addFunction("cam-up" , ()->{
             // trace(controls.CAM.pressed);
             return controls.CAM.pressed.up;
         });
-        FlxG.watch.addFunction("cam-down" , ()->controls.CAM.pressed.down);
-        FlxG.watch.addFunction("cam-left" , ()->controls.CAM.pressed.left);
-        FlxG.watch.addFunction("cam-right" , ()->controls.CAM.pressed.right);
+        FlxG.watch.addFunction("cam-down" , ()->controls.CAM.pressed.down ); 
+        FlxG.watch.addFunction("cam-left" , ()->controls.CAM.pressed.left ); 
+        FlxG.watch.addFunction("cam-right", ()->controls.CAM.pressed.right);
+        FlxG.watch.addFunction("cam-up"   , ()->controls.CAM.pressed.up   );
+        FlxG.watch.addFunction("cam-right-rp", ()->controls.CAM.holdRepeat.right);
         
         // // Check if multiple actions are pressed like so:
         FlxG.watch.addFunction("l/r"   , ()->controls.pressed.any([LEFT, RIGHT]));

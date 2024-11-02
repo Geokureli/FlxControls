@@ -1,18 +1,19 @@
 package flixel.addons.input;
 
-import flixel.input.FlxInput;
-import flixel.util.FlxDirection;
-import flixel.math.FlxMath;
 import flixel.FlxG;
 import flixel.addons.input.FlxControls;
 import flixel.addons.input.FlxControlInputType;
+import flixel.addons.input.FlxRepeatInput;
+import flixel.input.FlxInput;
 import flixel.input.actions.FlxActionInput;
 import flixel.input.actions.FlxAction;
 import flixel.input.actions.FlxActionInputAnalog;
 import flixel.input.actions.FlxActionSet;
 import flixel.input.gamepad.FlxGamepadInputID;
 import flixel.input.keyboard.FlxKey;
+import flixel.math.FlxMath;
 import flixel.util.FlxAxes;
+import flixel.util.FlxDirection;
 
 @:forward
 abstract FlxAnalogSet1D<TAction:EnumValue>(FlxAnalogSet1DBase<TAction>) to FlxAnalogSet1DBase<TAction>
@@ -114,47 +115,6 @@ abstract FlxAnalogSet2DBase<TAction:EnumValue>(FlxAnalogSet<TAction>) to FlxAnal
     inline function get_holdRepeat() return this.holdRepeat;
 }
 
-private class DirectionInput extends FlxInput<FlxDirection>
-{
-    inline static var INITIAL_DELAY = 0.5;
-    inline static var REPEAT_DELAY = 0.1;
-    
-    var timer:Float = 0;
-    var repeatTriggered = false;
-    
-    public function triggerRepeat():Bool
-    {
-        return repeatTriggered;
-    }
-    
-    public function updateWithState(isPressed:Bool)
-    {
-        repeatTriggered = false;
-        if (pressed)
-        {
-            timer += FlxG.elapsed;
-            repeatTriggered = timer >= REPEAT_DELAY;
-            if (repeatTriggered)
-                timer -= REPEAT_DELAY;
-        }
-        
-        if (isPressed && released)
-        {
-            press();
-            timer = REPEAT_DELAY - INITIAL_DELAY;
-            repeatTriggered = true;
-        }
-        
-        if (!isPressed && pressed)
-        {
-            release();
-            timer = 0;
-        }
-        
-        update();
-    }
-}
-
 /**
  * Manages analog actions. There is usually only 1 of these per FlxControls instance, and it's only
  * accessed by FlxControls, which offers ways to use the actions in this set.
@@ -169,10 +129,10 @@ class FlxAnalogSet<TAction:EnumValue>
     final justReleased:FlxAnalogDirections2D<TAction>;
     final holdRepeat:FlxAnalogDirections2D<TAction>;
     
-    var upInput = new DirectionInput(UP);
-    var downInput = new DirectionInput(DOWN);
-    var leftInput = new DirectionInput(LEFT);
-    var rightInput = new DirectionInput(RIGHT);
+    var upInput = new FlxRepeatInput<FlxDirection>(UP);
+    var downInput = new FlxRepeatInput<FlxDirection>(DOWN);
+    var leftInput = new FlxRepeatInput<FlxDirection>(LEFT);
+    var rightInput = new FlxRepeatInput<FlxDirection>(RIGHT);
     
     var control:FlxControlAnalog;
     var parent:FlxControls<TAction>;
@@ -272,7 +232,7 @@ class FlxAnalogDirections2D<TAction:EnumValue>
     inline function get_right() return func(set.rightInput);
     
     var set:FlxAnalogSet<TAction>;
-    var func:(DirectionInput)->Bool;
+    var func:(FlxRepeatInput<FlxDirection>)->Bool;
     
     function new(set, func)
     {

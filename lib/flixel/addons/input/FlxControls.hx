@@ -13,6 +13,7 @@ import flixel.ui.FlxVirtualPad;
 import haxe.ds.ReadOnlyArray;
 
 using Lambda;
+using flixel.addons.input.FlxControls.DigitalEventTools;
 
 typedef ActionMap<TAction:EnumValue> = Map<TAction, Array<FlxControlInputType>>;
 typedef VPadMap = Map<FlxVirtualPadInputID, VirtualPadInputProxy>;
@@ -20,8 +21,6 @@ typedef VPadMap = Map<FlxVirtualPadInputID, VirtualPadInputProxy>;
 @:autoBuild(flixel.addons.system.macros.FlxControlsMacro.buildControls())
 abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
 {
-    static final allStates:ReadOnlyArray<FlxInputState> = [PRESSED, RELEASED, JUST_PRESSED, JUST_RELEASED];
-    
     /**
      * The gamepad to use, can either be a specific gamepad ID via `ID(myGamepad.id)`, or
      * a generic term like `FIRST_ACTIVE` or `all`
@@ -45,7 +44,7 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
     // @:noCompletion inline function get_justPressed () { return digitalSets[JUST_PRESSED ]; }
     // @:noCompletion inline function get_justReleased() { return digitalSets[JUST_RELEASED]; }
     
-    final digitalSets = new Map<FlxInputState, FlxDigitalSet<TAction>>();
+    final digitalSets = new Map<DigitalEvent, FlxDigitalSet<TAction>>();
     final analogSets = new Map<TAction, FlxAnalogSet<TAction>>();
     
     /** Used internally for FlxVirtualPads */
@@ -83,11 +82,8 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         final mappings = getDefaultMappings();
         
         // Initialize the digital lists
-        for (state in allStates)
-        {
-            digitalSets[state] = new FlxDigitalSet(this, state);
-            addSet(digitalSets[state]);
-        }
+        for (event in DigitalEvent.createAll())
+            digitalSets[event] = new FlxDigitalSet(this, event);
         
         for (action=>inputs in mappings)
         {
@@ -187,7 +183,7 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
      */
     inline public function checkDigital(action:TAction, state:FlxInputState)
     {
-        digitalSets[state].check(action);
+        digitalSets[state.toEvent()].check(action);
     }
     
     /**
@@ -316,6 +312,9 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         super.update();
         
         for (set in analogSets)
+            set.update();
+        
+        for (set in digitalSets)
             set.update();
         
         // log the last time each device was used
@@ -459,3 +458,38 @@ enum FlxGamepadIDRaw
     ID(id:Int);
 }
 
+@:using(flixel.addons.input.FlxControls.DigitalEventTools)
+@:noCompletion
+enum DigitalEvent
+{
+    PRESSED;
+    JUST_PRESSED;
+    RELEASED;
+    JUST_RELEASED;
+    REPEAT;
+}
+
+private class DigitalEventTools
+{
+    static public function toEvent(state:FlxInputState):DigitalEvent
+    {
+        return switch state
+        {
+            case FlxInputState.PRESSED      : DigitalEvent.PRESSED;
+            case FlxInputState.JUST_PRESSED : DigitalEvent.JUST_PRESSED;
+            case FlxInputState.RELEASED     : DigitalEvent.RELEASED;
+            case FlxInputState.JUST_RELEASED: DigitalEvent.JUST_RELEASED;
+        }
+    }
+    
+    static public function toState(event:DigitalEvent):FlxInputState
+    {
+        return switch event
+        {
+            case PRESSED | REPEAT: FlxInputState.PRESSED;
+            case JUST_PRESSED    : FlxInputState.JUST_PRESSED;
+            case RELEASED        : FlxInputState.RELEASED;
+            case JUST_RELEASED   : FlxInputState.JUST_RELEASED;
+        }
+    }
+}

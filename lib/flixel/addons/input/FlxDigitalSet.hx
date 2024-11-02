@@ -2,6 +2,7 @@ package flixel.addons.input;
 
 import flixel.addons.input.FlxControls;
 import flixel.addons.input.FlxControlInputType;
+import flixel.addons.input.FlxRepeatInput;
 import flixel.input.FlxInput;
 import flixel.input.IFlxInput;
 import flixel.input.actions.FlxActionInput;
@@ -11,6 +12,7 @@ import flixel.input.actions.FlxActionSet;
 import flixel.input.gamepad.FlxGamepadInputID;
 import flixel.input.keyboard.FlxKey;
 import flixel.input.mouse.FlxMouseButton;
+import flixel.util.FlxDestroyUtil;
 
 /**
  * Manages the digital actions for a specific input state, allowing you to see whether any action
@@ -21,38 +23,43 @@ import flixel.input.mouse.FlxMouseButton;
  * `FlxControls` also uses macros to build handy getters for each action, i.e.: `controls.pressed.ACCEPT`
  */
 @:allow(flixel.addons.input.FlxControls)
-abstract FlxDigitalSet<TAction:EnumValue>(FlxDigitalSetRaw<TAction>) to FlxDigitalSetRaw<TAction>
+class FlxDigitalSet<TAction:EnumValue>
 {
-    var state(get, never):FlxInputState;
-    var mappings(get, never):Map<TAction, FlxControlDigital>;
-    var parent(get, never):FlxControls<TAction>;
+    public final event:DigitalEvent;
+    public final mappings:Map<TAction, FlxControlDigital> = [];
     
-    function get_state() return this.state;
-    function get_mappings() return this.mappings;
-    function get_parent() return this.parent;
+    public var parent:FlxControls<TAction>;
+    var name:String;
     
-    inline public function new (parent, state)
+    public function new(parent, event)
     {
-        this = new FlxDigitalSetRaw(parent, state);
+        this.event = event;
+        this.parent = parent;
+        
+        name = '${parent.name}:digital-list-$event';
     }
     
-    public function destroy()
+    function destroy()
     {
-        this.destroy();
+        parent = null;
+        mappings.clear();
     }
     
     function get(action:TAction)
     {
         if (mappings.exists(action) == false)
-        {
-            mappings[action] = new FlxControlDigital('${parent.name}:${action.getName()}-$state');
-            this.add(mappings[action]);
-        }
+            mappings[action] = new FlxControlDigital('${parent.name}:${action.getName()}-$event', event);
         
         return mappings[action];
     }
     
-    inline public function check(action:TAction)
+    function update()
+    {
+        for (control in mappings)
+            control.update();
+    }
+    
+    public function check(action:TAction)
     {
         return get(action).check();
     }
@@ -69,7 +76,7 @@ abstract FlxDigitalSet<TAction:EnumValue>(FlxDigitalSetRaw<TAction>) to FlxDigit
     
     inline function add(action:TAction, input:FlxControlInputType)
     {
-        return get(action).add(parent, input, state);
+        return get(action).add(parent, input, event.toState());
     }
     
     inline function remove(action:TAction, input:FlxControlInputType)
@@ -84,27 +91,27 @@ abstract FlxDigitalSet<TAction:EnumValue>(FlxDigitalSetRaw<TAction>) to FlxDigit
     }
 }
 
-private class FlxDigitalSetRaw<TAction:EnumValue> extends FlxActionSet
+class FlxControlRepeatDigital extends FlxActionDigital
 {
-    public final state:FlxInputState;
-    public final mappings:Map<TAction, FlxControlDigital> = [];
+    public var input:Null<FlxRepeatInput<Int>>;
     
-    public var parent:FlxControls<TAction>;
-    
-    public function new(parent, state)
+    public function new (name, ?callback)
     {
-        this.state = state;
-        this.parent = parent;
-        
-        super('${parent.name}:digital-list-$state');
+        input = new FlxRepeatInput(0);
+        super(name, callback);
     }
     
-    override function destroy()
+    override function update()
     {
-        parent = null;
-        mappings.clear();
+        super.update();
         
-        super.destroy();
+        trace(super.check());
+        input.updateWithState(super.check());
+    }
+    
+    override function check():Bool
+    {
+        return input.triggerRepeat();
     }
 }
 
@@ -113,12 +120,15 @@ private class FlxDigitalSetRaw<TAction:EnumValue> extends FlxActionSet
  */
 @:allow(flixel.addons.input.FlxDigitalSet)
 @:access(flixel.addons.input.FlxControls)
-@:forward(check)
+@:forward(check, update)
 abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
 {
-    function new (name, ?callback)
+    function new (name, event, ?callback)
     {
-        this = new FlxActionDigital(name, callback);
+        if (event == REPEAT)
+            this = new FlxControlRepeatDigital(name, callback);
+        else
+            this = new FlxActionDigital(name, callback);
     }
     
     function add<TAction:EnumValue>(parent:FlxControls<TAction>, input:FlxControlInputType, state)

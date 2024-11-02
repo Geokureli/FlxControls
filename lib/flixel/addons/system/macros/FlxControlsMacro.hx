@@ -117,15 +117,26 @@ class FlxControlsMacro
         // Digital fields
         final fields = (macro class TempClass
         {
+            /** Whether the action is currently pressed */
             public var pressed     (get, never):$digitalSetCT;
+            
+            /** Whether the action is currently released */
             public var released    (get, never):$digitalSetCT;
+            
+            /** Whether the action was pressed in the last frame */
             public var justPressed (get, never):$digitalSetCT;
+            
+            /** Whether the action was released in the last frame */
             public var justReleased(get, never):$digitalSetCT;
             
-            @:noCompletion inline function get_pressed     () { return cast digitalSets[flixel.input.FlxInput.FlxInputState.PRESSED      ]; }
-            @:noCompletion inline function get_released    () { return cast digitalSets[flixel.input.FlxInput.FlxInputState.RELEASED     ]; }
-            @:noCompletion inline function get_justPressed () { return cast digitalSets[flixel.input.FlxInput.FlxInputState.JUST_PRESSED ]; }
-            @:noCompletion inline function get_justReleased() { return cast digitalSets[flixel.input.FlxInput.FlxInputState.JUST_RELEASED]; }
+            /** Similar to `justPressed` but holding the input for 0.5s will make it fire every 0.1s */
+            public var holdRepeat  (get, never):$digitalSetCT;
+            
+            @:noCompletion inline function get_pressed     () { return cast digitalSets[flixel.addons.input.FlxControls.DigitalEvent.PRESSED      ]; }
+            @:noCompletion inline function get_released    () { return cast digitalSets[flixel.addons.input.FlxControls.DigitalEvent.RELEASED     ]; }
+            @:noCompletion inline function get_justPressed () { return cast digitalSets[flixel.addons.input.FlxControls.DigitalEvent.JUST_PRESSED ]; }
+            @:noCompletion inline function get_justReleased() { return cast digitalSets[flixel.addons.input.FlxControls.DigitalEvent.JUST_RELEASED]; }
+            @:noCompletion inline function get_holdRepeat  () { return cast digitalSets[flixel.addons.input.FlxControls.DigitalEvent.REPEAT       ]; }
         }).fields;
         
         /** Helper to concat without creating a new array */
@@ -184,10 +195,9 @@ class FlxControlsMacro
         
         final actionCT = enumFields[0].actionCT;
         // define the type
-        final def = macro class $name { }
-        final listCT = (macro: flixel.addons.input.FlxDigitalSet<$actionCT>);
+        // final listCT = (macro: );
+        final def = macro class $name extends flixel.addons.input.FlxDigitalSet<$actionCT> { }
         def.meta.push({ name:":forward", pos:Context.currentPos() });
-        def.kind = TDAbstract(listCT, [listCT], [listCT]);
         
         for (field in enumFields)
         {
