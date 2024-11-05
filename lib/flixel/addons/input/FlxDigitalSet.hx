@@ -105,7 +105,6 @@ class FlxControlRepeatDigital extends FlxActionDigital
     {
         super.update();
         
-        trace(super.check());
         input.updateWithState(super.check());
     }
     
