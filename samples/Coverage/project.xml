@@ -29,10 +29,9 @@
 	<!--PATHS SETTINGS-->
 	
 	<set name="no-custom-backend" />
-	<set name="BUILD_DIR" value="Export" />
-	<classpath name="Source" />
-	<classpath name="Lib" />
-	<assets path="Assets" rename="assets" />
+	<set name="BUILD_DIR" value="export" />
+	<classpath name="source" />
+	<classpath name="../../lib" />
 	
 	<!--LIBRARIES-->
 		
@@ -68,11 +67,11 @@
 	<!--Optimise inputs, be careful you will get null errors if you don't use conditionals in your game-->
 	<!--<haxedef name="FLX_NO_MOUSE" if="mobile" />-->
 	<!--<haxedef name="FLX_NO_KEYBOARD" if="mobile" />-->
-	<haxedef name="FLX_NO_TOUCH" if="desktop" />
-	<haxedef name="FLX_NO_GAMEPAD" />
+	<!-- <haxedef name="FLX_NO_TOUCH" if="desktop" /> -->
+	<!-- <haxedef name="FLX_NO_GAMEPAD" /> -->
 	
 	<!--Disable the Flixel core sound tray-->
-	<haxedef name="FLX_NO_SOUND_TRAY" />
+	<!-- <haxedef name="FLX_NO_SOUND_TRAY" /> -->
     
 	<!--Disable the Flixel sound management code-->
 	<!--<haxedef name="FLX_NO_SOUND_SYSTEM" />-->
