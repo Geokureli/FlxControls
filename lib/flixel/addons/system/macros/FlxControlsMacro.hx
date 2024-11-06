@@ -109,7 +109,7 @@ class FlxControlsMacro
     {
         #if (FlxControls.useSimpleDigital)
         final actionCT = Context.getType(enumType.module + "." + enumType.name).toComplexType();
-        final listCT = (macro: flixel.addons.input.FlxDigitalSet<$actionCT>);
+        final digitalSetCT = (macro: flixel.addons.input.FlxDigitalSet<$actionCT>);
         #else
         final digitalSetCT = buildDigitalSet(enumType, enumDataList);
         // final analogSetCT = buildAnalogSet(enumType, enumDataList);

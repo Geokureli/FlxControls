@@ -30,7 +30,7 @@ class PlayState extends FlxState
 	var hud:HUD;
 	var deadzoneOverlay:DeadzoneOverlay;
 
-	override public function create():Void
+	override function create():Void
 	{
 		FlxNapeSpace.init();
 

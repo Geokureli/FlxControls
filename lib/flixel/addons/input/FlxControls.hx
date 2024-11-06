@@ -135,10 +135,15 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
         inputsByAction.clear();
     }
     
-    // inline public function getAnalog2D(action:TAction):FlxControlAnalog2D
-    // {
-    //     return analogSet.getAnalog2D(action);
-    // }
+    inline public function getAnalog2D(action:TAction):FlxAnalogSet2D<TAction>
+    {
+        return cast analogSets.get(action);
+    }
+    
+    inline public function getAnalog1D(action:TAction):FlxAnalogSet1D<TAction>
+    {
+        return cast analogSets.get(action);
+    }
     
     // inline public function getAnalog1D(action:TAction):FlxControlAnalog1D
     // {
