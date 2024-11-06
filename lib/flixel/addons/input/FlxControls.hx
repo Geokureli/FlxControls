@@ -5,6 +5,7 @@ import flixel.addons.input.FlxControlInputType;
 import flixel.addons.input.FlxDigitalSet;
 import flixel.input.FlxInput;
 import flixel.input.IFlxInput;
+import flixel.input.IFlxInputManager;
 import flixel.input.actions.FlxActionInput;
 import flixel.input.actions.FlxActionInputAnalog;
 import flixel.input.actions.FlxActionManager;
@@ -18,8 +19,21 @@ using flixel.addons.input.FlxControls.DigitalEventTools;
 typedef ActionMap<TAction:EnumValue> = Map<TAction, Array<FlxControlInputType>>;
 typedef VPadMap = Map<FlxVirtualPadInputID, VirtualPadInputProxy>;
 
+private class ActionManager extends FlxActionManager
+{
+    /**
+     * Prevents sets from being deactivated, not sure why FlxActionManager assumes
+     * each input source would have a dedicated set
+     */
+    override function onChange()
+    {
+        // Do nothing
+    }
+}
+
+
 @:autoBuild(flixel.addons.system.macros.FlxControlsMacro.buildControls())
-abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
+abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
 {
     /**
      * The gamepad to use, can either be a specific gamepad ID via `ID(myGamepad.id)`, or
@@ -32,6 +46,11 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
     
     /** The name of these controls, use for logging */
     public var name(default, null):String;
+    
+    /**
+     * The action manager used to track all the inputs
+     */
+    final manager:ActionManager;
     
     // These fields are generated via macro
     // public var pressed     (get, never):FlxDigitalSet<TAction>;
@@ -74,10 +93,10 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         // , FlxInputDevice.IFLXINPUT_OBJECT => FlxG.game.ticks // counts as mouse
         ];
     
-    public function new (name:String)
+    public function new (name = "Main")
     {
         this.name = name;
-        super();
+        manager = new ActionManager();
         
         final mappings = getDefaultMappings();
         
@@ -101,9 +120,9 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
     
     function initGroups() {}
     
-    override function destroy()
+    public function destroy()
     {
-        super.destroy();
+        manager.destroy();
         
         for (list in digitalSets)
             list.destroy();
@@ -309,9 +328,18 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         return listInputsFor(action, device).map((input)->input.getLabel(gamepad));
     }
     
-    override function update()
+    
+    public function reset()
     {
-        super.update();
+        manager.reset();
+        // No idea what should happen here, nothing happens in FlxActionManager
+    }
+    function onFocus() { @:privateAccess manager.onFocus(); }
+    function onFocusLost() { @:privateAccess manager.onFocusLost(); }
+    
+    function update()
+    {
+        @:privateAccess manager.update();
         
         for (set in analogSets)
             set.update();
@@ -389,15 +417,6 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
             case NONE:
                 null;
         }
-    }
-    
-    /**
-     * Prevents sets from being deactivated, not sure why FlxActionManager assumes
-     * each input source would have a dedicated set
-     */
-    override function onChange()
-    {
-        // Do nothing
     }
 }
 
