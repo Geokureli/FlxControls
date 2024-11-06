@@ -650,12 +650,22 @@ class FlxControlAnalog extends FlxActionAnalog
     #end
 }
 
+private class ActionInputAnalog extends FlxActionInputAnalog
+{
+    #if (flixel < "5.9.0")
+    public function new (device, inputId, trigger:FlxAnalogState, axes = EITHER, deviceId = FlxInputDeviceID.FIRST_ACTIVE)
+    {
+        super(device, inputId, (cast trigger:FlxInputState), axes, deviceID);
+    }
+    #end
+}
+
 function checkKey(key:FlxKey):Float
 {
     return FlxG.keys.checkStatus(key, PRESSED) ? 1.0 : 0.0;
 }
 
-private class Analog1DKeys extends FlxActionInputAnalog
+private class Analog1DKeys extends ActionInputAnalog
 {
     public var up:FlxKey;
     public var down:FlxKey;
@@ -676,7 +686,7 @@ private class Analog1DKeys extends FlxActionInputAnalog
     }
 }
 
-private class Analog2DKeys extends FlxActionInputAnalog
+private class Analog2DKeys extends ActionInputAnalog
 {
     public var up:FlxKey;
     public var down:FlxKey;
@@ -727,7 +737,7 @@ function checkPadBool(id:FlxGamepadInputID, gamepadID:FlxGamepadID):Bool
     }
 }
 
-private class Analog1DGamepad extends FlxActionInputAnalog
+private class Analog1DGamepad extends ActionInputAnalog
 {
     public var up:FlxGamepadInputID;
     public var down:FlxGamepadInputID;
@@ -756,7 +766,7 @@ private class AnalogGamepadStick extends FlxActionInputAnalogGamepad
     }
 }
 
-private class Analog2DGamepad extends FlxActionInputAnalog
+private class Analog2DGamepad extends ActionInputAnalog
 {
     public var up:FlxGamepadInputID;
     public var down:FlxGamepadInputID;
@@ -789,7 +799,7 @@ inline function checkVPad(id:FlxVirtualPadInputID, proxies:VPadMap):Float
 }
 
 
-private class Analog1DVPad extends FlxActionInputAnalog
+private class Analog1DVPad extends ActionInputAnalog
 {
     public var proxies:VPadMap;
     public var up:FlxVirtualPadInputID;
@@ -818,7 +828,7 @@ private class Analog1DVPad extends FlxActionInputAnalog
     }
 }
 
-private class Analog2DVPad extends FlxActionInputAnalog
+private class Analog2DVPad extends ActionInputAnalog
 {
     public var proxies:VPadMap;
     public var up:FlxVirtualPadInputID;
@@ -904,7 +914,7 @@ private class AnalogMousePosition extends FlxActionInputAnalogMousePosition
     }
 }
 
-private class AnalogMouseWheelDelta extends FlxActionInputAnalog
+private class AnalogMouseWheelDelta extends ActionInputAnalog
 {
     final scale:Float;
     

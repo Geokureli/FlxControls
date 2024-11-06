@@ -28,7 +28,11 @@ class PlayerOrb extends Orb
 		setDrag(0.98);
 		
 		controls = new PlayerControls("player");
+		#if (flixel < "5.9.0")
+		FlxG.inputs.add(controls);
+		#else
 		FlxG.inputs.addInput(controls);
+		#end
 		
 		#if debug
 		FlxG.watch.addFunction("device", ()->controls.lastActiveDevice);

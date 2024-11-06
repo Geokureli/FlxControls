@@ -281,6 +281,7 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         return inputsByAction[action].filter((input)->input.getDevice() == device);
     }
     
+    #if (flixel >= "5.9.0")
     /**
      * Returns a device specific id for every input that can be attached to an action. For gamepads it will use
      * identifiers such as `WII_REMOTE(A)` or `PS4(SQUARE)`. For keyboard, the button label is returned.
@@ -294,6 +295,7 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
         final gamepad = getActiveGamepad();
         return listInputsFor(action, device).map((input)->input.getMappedInput(gamepad));
     }
+    #end
     
     /**
      * Returns a list of all inputs currently added to the specified action
@@ -345,7 +347,11 @@ abstract class FlxControls<TAction:EnumValue> extends FlxActionManager
             case FlxInputDevice.KEYBOARD:
                 FlxG.keys.pressed.ANY;
             case FlxInputDevice.MOUSE:
+                #if (flixel < "5.9.0")
+                FlxG.mouse.deltaScreenX != 0 || FlxG.mouse.deltaScreenY != 0
+                #else
                 FlxG.mouse.deltaViewX != 0 || FlxG.mouse.deltaViewY != 0
+                #end
                 || FlxG.mouse.pressed || FlxG.mouse.justReleased
                 #if FLX_MOUSE_ADVANCED
                 || FlxG.mouse.pressedMiddle || FlxG.mouse.justReleasedMiddle

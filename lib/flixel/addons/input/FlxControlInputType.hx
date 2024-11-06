@@ -1,6 +1,5 @@
 package flixel.addons.input;
 
-import flixel.addons.input.FlxControlMappedInput;
 import flixel.input.actions.FlxActionInput;
 import flixel.input.actions.FlxActionInputAnalog;
 import flixel.input.gamepad.FlxGamepad;
@@ -378,15 +377,17 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
         }
     }
     
+    #if (flixel >= "5.9.0")
     /**
      * Finds a device specific id for every input that can be attached to an action. For gamepads it will use
      * identifiers such as `WII_REMOTE(A)` or `PS4(SQUARE)`. For keyboard, the button label is returned.
      * for "Multi button" inputs (like analog WASD), an array is returned.
      */
-    inline public function getMappedInput(activeGamepad:FlxGamepad):FlxControlMappedInput
+    inline public function getMappedInput(activeGamepad:FlxGamepad)
     {
-        return FlxControlMappedInputTools.toMappedInput(this, activeGamepad);
+        return flixel.addons.input.FlxControlMappedInput.FlxControlMappedInputTools.toMappedInput(this, activeGamepad);
     }
+    #end
 }
 
 enum FlxKeyInputType
