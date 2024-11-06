@@ -203,11 +203,12 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
      * Whether the specified action is in the target state
      * 
      * @param   action  An action the player can perform
-     * @param   state   The desired state of digital action
+     * @param   event   The event to check for. Possible values:
+     * `PRESSED`, `JUST_PRESSED`, `RELEASED`, `JUST_RELEASED` and `REPEAT`
      */
-    inline public function checkDigital(action:TAction, state:FlxInputState)
+    inline public function checkDigital(action:TAction, event:DigitalEvent)
     {
-        digitalSets[state.toEvent()].check(action);
+        digitalSets[event].check(action);
     }
     
     /**
