@@ -3,7 +3,6 @@ package;
 import Action;
 import flixel.FlxG;
 import flixel.FlxSprite;
-import flixel.addons.input.FlxControls;
 import flixel.ui.FlxVirtualPad;
 import flixel.util.FlxColor;
 

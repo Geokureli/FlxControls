@@ -1,6 +1,5 @@
 import flixel.addons.input.FlxControls;
 import flixel.addons.input.FlxControlInputType;
-import flixel.addons.input.FlxControlInputType.FlxVirtualPadInputID;
 import flixel.input.keyboard.FlxKey;
 import flixel.input.gamepad.FlxGamepadInputID;
 
