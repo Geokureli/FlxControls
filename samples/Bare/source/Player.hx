@@ -46,7 +46,11 @@ class Player extends FlxSprite
 	function addInputs():Void
 	{
 		controls = new Controls("Main");
+		#if (flixel < "5.9.0")
+		FlxG.inputs.add(controls);
+		#else
 		FlxG.inputs.addInput(controls);
+		#end
 		
 		// Add on screen virtual pad to demonstrate UI buttons tied to actions
 		_virtualPad = new FlxVirtualPad(FULL, NONE);

@@ -21,7 +21,11 @@ class BootState extends flixel.FlxState
     override function create()
     {
         final controls = new Controls("test");
+        #if (flixel < "5.9.0")
+        FlxG.inputs.add(controls);
+        #else
         FlxG.inputs.addInput(controls);
+        #end
         
         // @:privateAccess
         // final testMap = controls.getDefaultMappings();
