@@ -25,10 +25,10 @@ import flixel.util.FlxDestroyUtil;
 @:allow(flixel.addons.input.FlxControls)
 class FlxDigitalSet<TAction:EnumValue>
 {
-    public final event:DigitalEvent;
-    public final mappings:Map<TAction, FlxControlDigital> = [];
+    final event:DigitalEvent;
+    final mappings:Map<TAction, FlxControlDigital> = [];
     
-    public var parent:FlxControls<TAction>;
+    var parent:FlxControls<TAction>;
     var name:String;
     
     public function new(parent, event)
