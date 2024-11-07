@@ -84,7 +84,7 @@ class FlxDigitalSet<TAction:EnumValue>
         return get(action).remove(parent, input);
     }
     
-    function setGamepadID(id:FlxGamepadID)
+    function setGamepadID(id:FlxDeviceID)
     {
         for (control in mappings)
             control.setGamepadID(id);
@@ -235,7 +235,7 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
         return null;
     }
     
-    public function setGamepadID(id:FlxGamepadID)
+    public function setGamepadID(id:FlxDeviceID)
     {
         for (input in this.inputs)
         {

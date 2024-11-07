@@ -189,7 +189,7 @@ class FlxAnalogSet<TAction:EnumValue>
         control.removeInputType(input);
     }
     
-    function setGamepadID(id:FlxGamepadID)
+    function setGamepadID(id:FlxDeviceID)
     {
         control.setGamepadID(id);
     }
@@ -381,7 +381,8 @@ class FlxControlAnalog extends FlxActionAnalog
         }
     }
     
-    inline function addGamepadInput(inputID:FlxGamepadInputID, axis, gamepadID:FlxGamepadID)
+    inline function addGamepadInput(inputID:FlxGamepadInputID, axis, gamepadID:FlxDeviceID
+    )
     {
         add(new AnalogGamepadStick(inputID, this.trigger, axis, gamepadID.toDeviceID()));
     }
@@ -592,7 +593,7 @@ class FlxControlAnalog extends FlxActionAnalog
         }
     }
     
-    public function setGamepadID(id:FlxGamepadID)
+    public function setGamepadID(id:FlxDeviceID)
     {
         for (input in this.inputs)
         {
@@ -715,24 +716,24 @@ private class Analog2DKeys extends ActionInputAnalog
     }
 }
 
-inline function checkPad(id:FlxGamepadInputID, gamepadID:FlxGamepadID):Float
+inline function checkPad(id:FlxGamepadInputID, gamepadID:FlxDeviceID):Float
 {
     return checkPadBool(id, gamepadID) ? 1.0 : 0.0;
 }
 
-function checkPadBool(id:FlxGamepadInputID, gamepadID:FlxGamepadID):Bool
+function checkPadBool(id:FlxGamepadInputID, gamepadID:FlxDeviceID):Bool
 {
     return switch gamepadID
     {
-        case FlxGamepadIDRaw.ID(id):
+        case FlxDeviceIDRaw.ID(id):
             final gamepad = FlxG.gamepads.getByID(id);
             gamepad != null && gamepad.checkStatus(id, PRESSED);
-        case FlxGamepadIDRaw.FIRST_ACTIVE:
+        case FlxDeviceIDRaw.FIRST_ACTIVE:
             final gamepad = FlxG.gamepads.getFirstActiveGamepad();
             gamepad != null && gamepad.checkStatus(id, PRESSED);
-        case FlxGamepadIDRaw.ALL:
+        case FlxDeviceIDRaw.ALL:
             FlxG.gamepads.anyPressed(id);
-        case FlxGamepadIDRaw.NONE:
+        case FlxDeviceIDRaw.NONE:
             false;
     }
 }
@@ -742,7 +743,7 @@ private class Analog1DGamepad extends ActionInputAnalog
     public var up:FlxGamepadInputID;
     public var down:FlxGamepadInputID;
     
-    public function new (gamepadID:FlxGamepadID, trigger:FlxAnalogState, up, down)
+    public function new (gamepadID:FlxDeviceID, trigger:FlxAnalogState, up, down)
     {
         this.up = up;
         this.down = down;
@@ -773,7 +774,7 @@ private class Analog2DGamepad extends ActionInputAnalog
     public var right:FlxGamepadInputID;
     public var left:FlxGamepadInputID;
     
-    public function new (gamepadID:FlxGamepadID, trigger:FlxAnalogState, up, down, right, left)
+    public function new (gamepadID:FlxDeviceID, trigger:FlxAnalogState, up, down, right, left)
     {
         this.up = up;
         this.down = down;

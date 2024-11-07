@@ -39,7 +39,7 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
      * The gamepad to use, can either be a specific gamepad ID via `ID(myGamepad.id)`, or
      * a generic term like `FIRST_ACTIVE` or `all`
      */
-    public var gamepadID(default, null):FlxGamepadID = FIRST_ACTIVE;
+    public var gamepadID(default, null):FlxDeviceID = ALL;
     
     /** The virtual pad to use */
     public var virtualPad(default, null):Null<FlxVirtualPad> = null;
@@ -156,7 +156,7 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
      * @param   id  Can either be a specific gamepad ID via `ID(myGamepad.id)`, or
      * a generic term like `FIRST_ACTIVE` or `all`
      */
-    public function setGamepadID(id:FlxGamepadID)
+    public function setGamepadID(id:FlxDeviceID)
     {
         if (gamepadID == id)
             return;
@@ -446,19 +446,19 @@ private class VirtualPadInputProxy implements IFlxInput
 /**
  * Used to reference specific gamepads by id or with less specific terms like `FIRST_ACTIVE`
  */
-abstract FlxGamepadID(FlxGamepadIDRaw) from FlxGamepadIDRaw
+abstract FlxDeviceID(FlxDeviceIDRaw) from FlxDeviceIDRaw
 {
     @:from
-    static public function fromInt(id:Int):FlxGamepadID
+    static public function fromInt(id:Int):FlxDeviceID
     {
         return switch (id)
         {
             case FlxInputDeviceID.FIRST_ACTIVE:
-                FlxGamepadIDRaw.FIRST_ACTIVE;
+                FlxDeviceIDRaw.FIRST_ACTIVE;
             case FlxInputDeviceID.ALL:
-                FlxGamepadIDRaw.ALL;
+                FlxDeviceIDRaw.ALL;
             case FlxInputDeviceID.NONE:
-                FlxGamepadIDRaw.NONE;
+                FlxDeviceIDRaw.NONE;
             default:
                 ID(id);
         }
@@ -469,11 +469,11 @@ abstract FlxGamepadID(FlxGamepadIDRaw) from FlxGamepadIDRaw
     {
         return switch this
         {
-            case FlxGamepadIDRaw.FIRST_ACTIVE:
+            case FlxDeviceIDRaw.FIRST_ACTIVE:
                 FlxInputDeviceID.FIRST_ACTIVE;
-            case FlxGamepadIDRaw.ALL:
+            case FlxDeviceIDRaw.ALL:
                 FlxInputDeviceID.ALL;
-            case FlxGamepadIDRaw.NONE:
+            case FlxDeviceIDRaw.NONE:
                 FlxInputDeviceID.NONE;
             case ID(id):
                 id;
@@ -481,7 +481,7 @@ abstract FlxGamepadID(FlxGamepadIDRaw) from FlxGamepadIDRaw
     }
 }
 
-enum FlxGamepadIDRaw
+enum FlxDeviceIDRaw
 {
     FIRST_ACTIVE;
     ALL;
