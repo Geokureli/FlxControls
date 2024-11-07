@@ -76,3 +76,4 @@ These ids can be used to create custom labels or display a specific image of tha
 - Add way to disable keyboard and mouse for specific instances of `FlxControls`
 - Add way to get key labels for non-english keyboards
 - Map each `FlxControlMappedInput` to an image in [Kenney's input prompts](https://www.kenney.nl/assets/input-prompts)
+- Add groups

@@ -42,6 +42,14 @@ class FlxDigitalSet<TAction:EnumValue>
     function destroy()
     {
         parent = null;
+        clear();
+    }
+    
+    function clear()
+    {
+        for (control in mappings)
+            control.destroy();
+        
         mappings.clear();
     }
     
@@ -119,7 +127,7 @@ class FlxControlRepeatDigital extends FlxActionDigital
  */
 @:allow(flixel.addons.input.FlxDigitalSet)
 @:access(flixel.addons.input.FlxControls)
-@:forward(check, update)
+@:forward(check, update, destroy)
 abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
 {
     function new (name, event, ?callback)

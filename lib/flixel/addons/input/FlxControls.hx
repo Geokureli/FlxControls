@@ -98,22 +98,11 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
         this.name = name;
         manager = new ActionManager();
         
-        final mappings = getDefaultMappings();
-        
         // Initialize the digital lists
         for (event in DigitalEvent.createAll())
             digitalSets[event] = new FlxDigitalSet(this, event);
         
-        for (action=>inputs in mappings)
-        {
-            if (inputs == null)
-                throw 'Unexpected null inputs for $action';
-            
-            inputsByAction[action] = [];
-            
-            for (input in inputs)
-                add(action, input);
-        }
+        addMappings(getDefaultMappings());
         
         initGroups();
     }
@@ -171,6 +160,46 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
     }
     
     abstract function getDefaultMappings():ActionMap<TAction>;
+    
+    /**
+     * Removes all mapped inputs
+     */
+    public function clearMappings()
+    {
+        // Clear each digital set, but don't destroy
+        for (set in digitalSets)
+            set.clear();
+        
+        // Destroy and remove all analog sets
+        for (list in analogSets)
+            list.destroy();
+        
+        analogSets.clear();
+        inputsByAction.clear();
+    }
+    
+    /**
+     * Removes all mapped inputs and adds all the new ones passed in
+     */
+    public function resetMappings(mappings:ActionMap<TAction>)
+    {
+        clearMappings();
+        addMappings(mappings);
+    }
+    
+    function addMappings(mappings:ActionMap<TAction>)
+    {
+        for (action=>inputs in mappings)
+        {
+            if (inputs == null)
+                throw 'Unexpected null inputs for $action';
+            
+            inputsByAction[action] = [];
+            
+            for (input in inputs)
+                add(action, input);
+        }
+    }
     
     /** The virtual pad to use */
     public function setVirtualPad(pad:FlxVirtualPad)
