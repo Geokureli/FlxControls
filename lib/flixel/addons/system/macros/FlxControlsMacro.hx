@@ -94,7 +94,7 @@ class FlxControlsMacro
         for (newField in newFields)
             fields.push(newField);
         
-        // check
+        // check for default mappings
         final existingMapField = fields.find((f)->f.name == "getDefaultMappings");
         final foundDefaults = enumDataList.exists((action)->action.hasDefaults());
         // generate default mappings, if possible
@@ -102,6 +102,12 @@ class FlxControlsMacro
         // if (foundDefaults)
         {
             fields.push(buildDefaultMapField(enumDataList));
+        }
+        
+        // check for groups
+        if (enumDataList.exists((action)->action.hasGroups()))
+        {
+            fields.push(buildInitGroupsField(enumDataList));
         }
     }
     
@@ -268,6 +274,35 @@ class FlxControlsMacro
             }
         }).fields[0];
     }
+    
+    static function buildInitGroupsField(actions:Array<ActionFieldData>):Field
+    {
+        // Map each group to the actions it contains
+        final groups:Map<String, Array<ActionFieldData>> = [];
+        for (action in actions)
+        {
+            for (group in action.groups)
+            {
+                if (groups.exists(group) == false)
+                    groups[group] = [];
+                
+                groups[group].push(action);
+            }
+        }
+        
+        final exprBlock = [for (name=>actions in groups)
+        {
+            macro groups[$v{name}] = $a{actions.map((action) -> return macro $p{action.path})};
+        }];
+        
+        return (macro class TempClass
+        {
+            override function initGroups()
+            {
+                $b{exprBlock};
+            }
+        }).fields[0];
+    }
 }
 
 @:structInit
@@ -278,6 +313,7 @@ class ActionFieldData
     public var actionCT:ComplexType;
     public var controlType:ActionType;
     public var inputs:Array<Expr>;
+    public var groups:Array<String>;
     public var doc:String;
     
     static public function fromConstruct(action:EnumField, type:EnumType):ActionFieldData
@@ -289,6 +325,7 @@ class ActionFieldData
             , actionCT   : Context.getType(type.module + "." + type.name).toComplexType()
             , controlType: getControlType(action)
             , inputs     : getInputs(action.meta.extract(":inputs"))
+            , groups     : getGroups(action.meta.extract(":group"))
             , doc        : action.doc
             };
     }
@@ -317,6 +354,28 @@ class ActionFieldData
             case found:
                 throw('Expected no more than one @:inputs meta, found ${inputs.length}');
         }
+    }
+    
+    static function getGroups(groups:Array<MetadataEntry>):Array<String>
+    {
+        final results = new Array<String>();
+        for (group in groups)
+        {
+            switch group.params
+            {
+                case [_.expr => param]:
+                    switch param
+                    {
+                        case EConst(CString(name, _)):
+                            results.push(name);
+                        case found:
+                            throw 'Expected string arg on @:group meta, found: [${found.getName()}]';
+                    }
+                case found:
+                    throw 'Expected string arg on @:group meta, found: ${found.map((p)->p.expr.getName())}';
+            }
+        }
+        return results;
     }
     
     public function createGetter():Array<Field>
@@ -362,6 +421,11 @@ class ActionFieldData
     public function hasDefaults()
     {
         return inputs != null;
+    }
+    
+    public function hasGroups()
+    {
+        return groups.length > 0;
     }
     
     static function createAnalogSet1DType(arg:String, actionCT:ComplexType)

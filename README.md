@@ -70,10 +70,20 @@ Gamepad(Multi([PS4(TRIANGLE), PS4(X), PS4(CIRCLE), PS4(SQUARE)]))
 ```
 These ids can be used to create custom labels or display a specific image of that input.
 
+## Action Groups
+Action groups allow you to specify which actions cannot share inputs. This is useful for actions with opposing purposes, like accept vs cancel or up vs down. This can be very important for games that let the user remap controls.
+
+### Creating Groups
+Simply call `addGroup` to create a new action group, alternatively you can override the `initGroups` method in your extending controls class to set the groups directly. The last and perhaps easiest way to assign groups is to use the `@:group("tag-name-here")` tag on your Action enum fields.
+
+### Checking for Group Conflicts
+To get a list of every conflict in the current setup, use the `checkAllGroupConflicts` method, or the `checkGroupConflicts` method for checking a single group. If possible conflicts should be prevented before being added via the `listConflictingActions` or `addIfValid` methods. By design, the `add` method does nothing to prevent conflicts, and the default mappings are not checked for validity, but you can use the compile flag `FlxControls.checkConflictingDefaults` to enable this, meaning conflicts with the default mapping will throw an error at runtime.
+
 ## To Dos
 - Schema for saving input mappings
 - Example input remapping UI
 - Add way to disable keyboard and mouse for specific instances of `FlxControls`
 - Add way to get key labels for non-english keyboards
 - Map each `FlxControlMappedInput` to an image in [Kenney's input prompts](https://www.kenney.nl/assets/input-prompts)
-- Add groups
+- ~~Add groups~~
+- Add custom analog action

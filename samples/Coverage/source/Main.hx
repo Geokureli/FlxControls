@@ -27,6 +27,21 @@ class BootState extends flixel.FlxState
         FlxG.inputs.addInput(controls);
         #end
         
+        for (action in Action.createAll())
+            FlxG.log.add('$action groups: ${controls.groupsOf(action)}');
+        
+        FlxG.log.add(switch controls.addIfValid(DOWN, FlxKey.W)
+        {
+            case None: "W was added to DOWN";
+            case Found(list): "W was not added to DOWN, conflicts: " + list.map((c)->'${c.group}:${c.action1}');
+        });
+        
+        FlxG.log.add(switch controls.addIfValid(UP_2, FlxKey.W)
+        {
+            case None: "W was added to UP_2";
+            case Found(list): "W was not added to UP_2, conflicts: " + list.map((c)->'${c.group}:${c.action1}');
+        });
+        
         // @:privateAccess
         // final testMap = controls.getDefaultMappings();
         // for (action=>inputs in testMap)

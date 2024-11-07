@@ -212,6 +212,76 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
         }
     }
     
+    function simplify()
+    {
+        return switch this
+        {
+            case Keyboard(WASD):
+                Keyboard(Multi(W, S, D, A));
+            case Keyboard(Arrows):
+                Keyboard(Multi(UP, DOWN, RIGHT, LEFT));
+            case Gamepad(DPad):
+                Gamepad(Multi(DPAD_UP, DPAD_DOWN, DPAD_RIGHT, DPAD_LEFT));
+            case Gamepad(Face):
+                Gamepad(Multi(Y, A, B, X));
+            case VirtualPad(Arrows):
+                VirtualPad(Multi(UP, DOWN, RIGHT, LEFT));
+            case Keyboard(Lone(_))
+                | Gamepad(Lone(_))
+                | VirtualPad(Lone(_))
+                | Keyboard(Multi(_, _, _, _))
+                | Gamepad(Multi(_, _, _, _))
+                | VirtualPad(Multi(_, _, _, _))
+                | Mouse(_):
+                this;
+        }
+    }
+    
+    public function conflicts(input:FlxControlInputType)
+    {
+        return switch [simplify(), input.simplify()]
+        {
+            case [Gamepad(Multi(up1, down1, left1, right1)), Gamepad(Multi(up2, down2, left2, right2))]:
+                anyMatch([up1, up2, down1, down2, right1, right2, left1, left2]);
+            case [Gamepad(Lone(id)), Gamepad(Multi(up, down, right, left))]:
+                anyMatch([id, up, down, right, left]);
+            case [Gamepad(Multi(up, down, right, left)), Gamepad(Lone(id))]:
+                anyMatch([id, up, down, right, left]);
+                
+            case [Keyboard(Multi(up1, down1, right1, left1)), Keyboard(Multi(up2, down2, right2, left2))]:
+                anyMatch([up1, up2, down1, down2, right1, right2, left1, left2]);
+            case [Keyboard(Lone(id)), Keyboard(Multi(up, down, right, left))]:
+                anyMatch([id, up, down, right, left]);
+            case [Keyboard(Multi(up, down, right, left)), Keyboard(Lone(id))]:
+                anyMatch([id, up, down, right, left]);
+                
+            case [VirtualPad(Multi(up1, down1, right1, left1)), VirtualPad(Multi(up2, down2, right2, left2))]:
+                anyMatch([up1, up2, down1, down2, right1, right2, left1, left2]);
+            case [VirtualPad(Lone(id)), VirtualPad(Multi(up, down, right, left))]:
+                anyMatch([id, up, down, right, left]);
+            case [VirtualPad(Multi(up, down, right, left)), VirtualPad(Lone(id))]:
+                anyMatch([id, up, down, right, left]);
+                
+            default:
+                compare(input);
+        }
+    }
+    
+    function anyMatch<T>(list:Array<T>)
+    {
+        var i = list.length;
+        while (i-- > 0)
+        {
+            var j = i;
+            while (j-- > 0)
+            {
+                if (list[i] == list[j] && list[i] != null)
+                    return true;
+            }
+        }
+        return false;
+    }
+    
     public function compare(input:FlxControlInputType)
     {
         return switch [this, input]

@@ -21,18 +21,26 @@ import flixel.input.keyboard.FlxKey as Key;
 enum Action
 {
     /** Moves the player up, also used to navigate menus */
+    @:group("movement") 
     @:inputs([Key.UP   , Key.W, DPAD_UP   , LEFT_STICK_DIGITAL_UP   , VPad.UP    ]) UP;
     /** Moves the player down, also used to navigate menus */
+    @:group("movement") 
+    @:group("car") 
     @:inputs([Key.DOWN , Key.S, DPAD_DOWN , LEFT_STICK_DIGITAL_DOWN , VPad.DOWN  ]) DOWN;
     /** Moves the player left, also used to navigate menus */
+    @:group("movement") 
     @:inputs([Key.LEFT , Key.A, DPAD_LEFT , LEFT_STICK_DIGITAL_LEFT , VPad.LEFT  ]) LEFT;
     /** Moves the player right, also used to navigate menus */
+    @:group("movement") 
     @:inputs([Key.RIGHT, Key.D, DPAD_RIGHT, LEFT_STICK_DIGITAL_RIGHT, VPad.RIGHT ]) RIGHT;
     /** A test action */
     @:inputs([RIGHT_ANALOG_STICK, MouseMove(), [I, K, L, J], MultiPad(X, B, A, Y), VPadArrows]) @:analog(x2, y2) CAM2;
     @:inputs([RIGHT_ANALOG_STICK, MouseMove(), [I, K, L, J], MultiPad(X, B, A, Y), VPadArrows]) @:analog( x,  y) CAM;
-    @:inputs([RIGHT_TRIGGER]) @:analog(vroom) GAS;
-    @:inputs([LEFT_TRIGGER])  @:analog(value) BREAKS;
+    @:group("car") @:inputs([RIGHT_TRIGGER]) @:analog(vroom) GAS;
+    @:group("car") @:inputs([LEFT_TRIGGER])  @:analog(value) BREAKS;
+    
+    @:group("test") @:inputs([WASD]) @:analog(x, y) MOVE;
+    @:group("test") @:inputs([Key.D]) UP_2;
 }
 
 class Controls extends FlxControls<Action> {}

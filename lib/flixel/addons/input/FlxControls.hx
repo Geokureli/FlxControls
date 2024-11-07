@@ -81,6 +81,8 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
     
     /** Used internally to list sets of actions that cannot have conflicting inputs */
     final groups:Map<String, Array<TAction>> = [];
+    /** Looks up the group of an action */
+    final groupsLookup:Map<TAction, Array<String>> = [];
     
     final inputsByAction:Map<TAction, Array<FlxControlInputType>> = [];
     
@@ -105,6 +107,16 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
         addMappings(getDefaultMappings());
         
         initGroups();
+        // Create reverse lookups  for each group
+        for (name=>actions in groups)
+        {
+            for (action in actions)
+                groupsOfRaw(action).push(name);
+        }
+        
+        #if (FlxControls.checkConflictingDefaults)
+        throwAllGroupConflicts();
+        #end
     }
     
     function initGroups() {}
@@ -124,6 +136,21 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
         inputsByAction.clear();
     }
     
+    /**
+     * Checks for all group conflicts and throws an informative error, if any are found
+     */
+    public function throwAllGroupConflicts()
+    {
+        switch (checkAllGroupConflicts())
+        {
+            case None:
+            case Found(list):
+                final strList = list.map((conflict)->conflict.toString());
+                strList.unshift("Found conflicting inputs in the default layout:");
+                throw strList.join("\n\t - ");
+        }
+    }
+    
     inline public function getAnalog2D(action:TAction):FlxAnalogSet2D<TAction>
     {
         return cast analogSets.get(action);
@@ -133,11 +160,6 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
     {
         return cast analogSets.get(action);
     }
-    
-    // inline public function getAnalog1D(action:TAction):FlxControlAnalog1D
-    // {
-    //     return analogSet.getAnalog1D(action);
-    // }
     
     /**
      * The gamepad to use
@@ -201,6 +223,98 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
         }
     }
     
+    /**
+     * Removes all groups
+     */
+    public function clearGroups()
+    {
+        groups.clear();
+        groupsLookup.clear();
+    }
+    
+    /**
+     * Adds the group, removing any previous group with that name. Groups are a way to prevent
+     * opposing actions from having the same input. For instance you might want to put
+     * `ACCEPT` and `CANCEL` in the same group, or `UP` and `DOWN`
+     * 
+     * @param name     The name of the group
+     * @param actions  The actions in this group
+     */
+    public function addGroup(name:String, actions:Array<TAction>)
+    {
+        if (groups.exists(name))
+            removeGroup(name);
+        
+        // Add the group
+        groups[name] = actions;
+        
+        // Add the reverse lookup
+        for (action in actions)
+            groupsOfRaw(action).push(name);
+    }
+    
+    /**
+     * Removes the group, by name. Not sure why anyone would need this
+     */
+    public function removeGroup(name:String)
+    {
+        if (groups.exists(name))
+        {
+            for (action in groups[name])
+                groupsOfRaw(action).remove(name);
+        }
+        groups.remove(name);
+    }
+    
+    /**
+     * Creates a list of all groups containing the target action
+     */
+    public function groupsOf(action:TAction):Array<String>
+    {
+        return groupsOfRaw(action).copy();
+    }
+    
+    /**
+     * Used internally to get or modify the stored groups of an action. Same as `groupsOf` but
+     * doesn't return a copy
+     */
+    function groupsOfRaw(action:TAction):Array<String>
+    {
+        if (groupsLookup.exists(action) == false)
+            groupsLookup[action] = [];
+        
+        return groupsLookup[action];
+    }
+    
+    inline function groupInstancesOf(action:TAction):Array<Array<TAction>>
+    {
+        return groupsOfRaw(action).map((g)->groups[g]);
+    }
+    
+    /**
+     * Creates a list of every conflict, in every group. A "conflict" is when two actions
+     * in the same group are using the same input
+     */
+    public function checkAllGroupConflicts()
+    {
+        final list = new Array<GroupConflict<TAction>>();
+        for (name=>group in groups)
+            GroupTools.addAllConflicts(this, name, group, list);
+        
+        return list.length > 0 ? Found(list) : None;
+    }
+    
+    /**
+     * Creates a list of every conflict, in a specific group. A "conflict" is when two actions
+     * in the group are using the same input
+     */
+    public function checkGroupConflicts(group:String)
+    {
+        final list = new Array<GroupConflict<TAction>>();
+        GroupTools.addAllConflicts(this, group, groups[group], list);
+        return list.length > 0 ? Found(list) : None;
+    }
+    
     /** The virtual pad to use */
     public function setVirtualPad(pad:FlxVirtualPad)
     {
@@ -241,6 +355,52 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
     }
     
     /**
+     * Whether adding an input to an action will cause conflicts with other actions in the same group
+     * 
+     * **Note:** To get a list of those conflicts, use `listConflictingActions`
+     * 
+     * @param   action  The would be action to add the input
+     * @param   input   The input to be added
+     */
+    public function canAdd(action:TAction, input:FlxControlInputType):Bool
+    {
+        return canAddHelper(action, input, true).match(None);
+    }
+    
+    /**
+     * Determines whether adding an input to an action will cause conflicts with
+     * other actions in the same group, and returns those conflicting actions.
+     * 
+     * @param   action  The would be action to add the input
+     * @param   input   The input to be added
+     * @return  A list of conflicting actions
+     */
+    public function listConflictingActions(action:TAction, input:FlxControlInputType):GroupConflictsResults<TAction>
+    {
+        return canAddHelper(action, input);
+    }
+    
+    function canAddHelper(action:TAction, input:FlxControlInputType, firstOnly = false):GroupConflictsResults<TAction>
+    {
+        final conflicts = new Array<GroupConflict<TAction>>();
+        for (groupName in groupsOfRaw(action))
+        {
+            final actionConflicts = GroupTools.getConflictingActions(this, groups[groupName], input);
+            for (action1 in actionConflicts)
+            {
+                if (action1 != action)
+                {
+                    conflicts.push(new GroupConflict(groupName, action1, action, input));
+                    if (firstOnly)
+                        return GroupTools.resultsFromArray(conflicts);
+                }
+            }
+        }
+        
+        return GroupTools.resultsFromArray(conflicts);
+    }
+    
+    /**
      * Adds the specified input to the target action
      * 
      * Exmples of acceptable inputs:
@@ -253,14 +413,14 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
      * @param   action  The target action
      * @param   input   Any input
      */
-    public function add(action:TAction, input:FlxControlInputType):Bool
+    public function add(action:TAction, input:FlxControlInputType)
     {
         // See if this action already has this input
         final existingInput = getExistingInput(action, input);
         if (existingInput != null)
             remove(action, existingInput);
         
-        inputsByAction[action].push(input);
+        getInputsOf(action).push(input);
         
         if (input.isDigital())
         {
@@ -270,8 +430,22 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
         
         if (input.isAnalog())
             getAnalogSet(action).add(input);
+    }
+    
+    /**
+     * Same as `add` but checks if adding the input will cause a conflict in a group
+     * 
+     * @param   action  The target action
+     * @param   input   Any input
+     * @return Any conflicts that would have arisen from the addition of this input
+     */
+    public function addIfValid(action:TAction, input:FlxControlInputType):GroupConflictsResults<TAction>
+    {
+        final conflicts = canAddHelper(action, input);
+        if (conflicts.match(None))
+            add(action, input);
         
-        return true;
+        return conflicts;
     }
     
     /**
@@ -289,7 +463,7 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
         if (input == null)
             return false;
         
-        inputsByAction[action].remove(input);
+        getInputsOf(action).remove(input);
         
         if (input.isDigital())
         {
@@ -313,12 +487,24 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
     
     function getExistingInput(action, input:FlxControlInputType)
     {
+        final inputs = getInputsOf(action);
         // see if the exact instance is contained
-        if (inputsByAction[action].contains(input))
+        if (inputs.contains(input))
             return input;
         
         // search for matching id and axis
-        return inputsByAction[action].find((i)->i.compare(input));
+        return inputs.find(input.compare);
+    }
+    
+    function getConflictingInput(action, input:FlxControlInputType)
+    {
+        final inputs = getInputsOf(action);
+        // see if the exact instance is contained
+        if (inputs.contains(input))
+            return input;
+        
+        // search for matching id and axis
+        return inputs.find(input.conflicts);
     }
     
     /**
@@ -329,10 +515,19 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
      */
     public function listInputsFor(action:TAction, device = FlxInputDevice.ALL)
     {
+        final inputs = getInputsOf(action);
         if (device == ALL)
-            return inputsByAction[action].copy();
+            return inputs.copy();
         
-        return inputsByAction[action].filter((input)->input.getDevice() == device);
+        return inputs.filter((input)->input.getDevice() == device);
+    }
+    
+    function getInputsOf(action:TAction)
+    {
+        if (inputsByAction.exists(action) == false)
+            inputsByAction[action] = [];
+        
+        return inputsByAction[action];
     }
     
     #if (flixel >= "5.9.0")
@@ -551,5 +746,114 @@ private class DigitalEventTools
             case RELEASED        : FlxInputState.RELEASED;
             case JUST_RELEASED   : FlxInputState.JUST_RELEASED;
         }
+    }
+}
+
+private class GroupTools
+{
+    static public function addAllConflicts<TAction:EnumValue>
+        (controls:FlxControls<TAction>, groupName:String, group:Array<TAction>, conflicts:Array<GroupConflict<TAction>>)
+    {
+        final inputs = group.map((action)->controls.listInputsFor(action));
+        function addConflict(i, j, input)
+        {
+            conflicts.push(new GroupConflict(groupName, group[i], group[j], input));
+        }
+        // Iterate through and only compare with previous indices
+        var i = group.length;
+        while (i-- > 0)
+        {
+            var j = i;
+            while (j-- > 0)
+                forEachConflict(inputs[i], inputs[j], (input)->addConflict(i, j, input));
+        }
+    }
+    
+    static function forEachConflict
+    (
+        listA:Array<FlxControlInputType>,
+        listB:Array<FlxControlInputType>,
+        func:(FlxControlInputType)->Void
+    )
+    {
+        for (inputA in listA)
+        {
+            if (listB.exists(inputA.conflicts))
+                func(inputA);
+        }
+    }
+    
+    /**
+     * Checks each group for actions with inputs matching the target input. Should be used before an input is added
+     * 
+     * @param   controls  The controls instance
+     * @param   group     A list of actions that should not have conflicts
+     * @param   input     The input to look for
+     */
+    static public function getConflictingActions<TAction:EnumValue>
+        (controls:FlxControls<TAction>, group:Array<TAction>, input:FlxControlInputType)
+    {
+        final list = new Array<TAction>();
+        for (action in group)
+        {
+            final inputs = controls.listInputsFor(action);
+            if (inputs.exists(input.conflicts))
+                list.push(action);
+        }
+        return list;
+    }
+    
+    static public function resultsFromArray<TAction:EnumValue>(list:Array<GroupConflict<TAction>>):GroupConflictsResults<TAction>
+    {
+        return list.length == 0 ? None : Found(list);
+    }
+    
+    static public function resultsFromActionArray<TAction:EnumValue>
+        (list:Array<TAction>, group:String, action2:TAction, input:FlxControlInputType):GroupConflictsResults<TAction>
+    {
+        return resultsFromArray(list.map((action1)->new GroupConflict(group, action1, action2, input)));
+    }
+}
+
+/**
+ * The results of a group conflict check.
+ * 
+ * A group conflict is when two actions belonging to the same group both use the same input.
+ * Conflicts in actions with opposing purposes may cause odd behavior, or restict the actions
+ * of the player
+ */
+enum GroupConflictsResults<TAction:EnumValue>
+{
+    /** No conflicts were found */
+    None;
+    
+    /** One or more conflicts were found */
+    Found(list:Array<GroupConflict<TAction>>);
+}
+
+/**
+ * A group conflict is when two actions belonging to the same group both use the same input.
+ * Conflicts in actions with opposing purposes may cause odd behavior, or restict the actions
+ * of the player
+ */
+@:structInit
+class GroupConflict<TAction:EnumValue>
+{
+    public final group:String;
+    public final action1:TAction;
+    public final action2:TAction;
+    public final input:FlxControlInputType;
+    
+    public function new (group, action1, action2, input)
+    {
+        this.group = group;
+        this.action1 = action1;
+        this.action2 = action2;
+        this.input = input;
+    }
+    
+    public function toString()
+    {
+        return '$input in group "$group" on actions $action1 and $action2';
     }
 }
