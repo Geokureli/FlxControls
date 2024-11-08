@@ -19,6 +19,10 @@ using flixel.addons.input.FlxControls.DigitalEventTools;
 typedef ActionMap<TAction:EnumValue> = Map<TAction, Array<FlxControlInputType>>;
 typedef VPadMap = Map<FlxVirtualPadInputID, VirtualPadInputProxy>;
 
+#if !debug
+#error "Test"
+#end
+
 private class ActionManager extends FlxActionManager
 {
     /**
