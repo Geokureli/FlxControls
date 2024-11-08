@@ -39,7 +39,7 @@ jobs:
     
     - name: Install Git Flixel
       if: ${{matrix.flixel-version}} == 'git'
-      run: haxelib install flixel --quiet
+      run: haxelib git flixel https://github.com/HaxeFlixel/flixel.git --quiet
     - name: Install Latest Flixel
       if: ${{matrix.flixel-version}} == 'latest'
       run: haxelib install flixel --quiet
