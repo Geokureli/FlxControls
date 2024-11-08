@@ -663,7 +663,11 @@ private class ActionInputAnalog extends FlxActionInputAnalog
 
 function checkKey(key:FlxKey):Float
 {
+    #if FLX_KEYBOARD
     return FlxG.keys.checkStatus(key, PRESSED) ? 1.0 : 0.0;
+    #else
+    return 0.0;
+    #end
 }
 
 private class Analog1DKeys extends ActionInputAnalog
@@ -723,6 +727,7 @@ inline function checkPad(id:FlxGamepadInputID, gamepadID:FlxDeviceID):Float
 
 function checkPadBool(id:FlxGamepadInputID, gamepadID:FlxDeviceID):Bool
 {
+    #if FLX_GAMEPAD
     return switch gamepadID
     {
         case FlxDeviceIDRaw.ID(id):
@@ -736,6 +741,9 @@ function checkPadBool(id:FlxGamepadInputID, gamepadID:FlxDeviceID):Bool
         case FlxDeviceIDRaw.NONE:
             false;
     }
+    #else
+    return false;
+    #end
 }
 
 private class Analog1DGamepad extends ActionInputAnalog
@@ -927,6 +935,10 @@ private class AnalogMouseWheelDelta extends ActionInputAnalog
     
     override function updateValues(x:Float, y:Float)
     {
+        #if FLX_MOUSE
         super.updateValues(FlxG.mouse.wheel * scale, 0);
+        #else
+        super.updateValues(0, 0);
+        #end
     }
 }

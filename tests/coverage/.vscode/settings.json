@@ -1,0 +1,23 @@
+{   "search.exclude": 
+    { "*/export/": true
+    }
+,   "haxecheckstyle.sourceFolders":
+    [ "source"
+    , "../../lib"
+    , "../../../../lib/flixel"
+    , "../../../../lib/flixel/tests/coverage/source"
+    , "../../../../lib/flixel/tests/unit/src"
+    ],
+    "lime.projectFile": "project.xml",
+	"lime.targets":
+    [ { "label": "AIR", "enabled":false }
+    , { "label": "Electron", "enabled":false }
+	],
+	"lime.buildTypes":
+    [ { "label": "Final", "enabled":false }
+    , { "label": "Debug", "enabled":false }
+    , { "args": ["-Dcoverage1"], "label": "Coverage1" }
+    , { "args": ["-Dcoverage2"], "label": "Coverage2" }
+    , { "args": ["-Dcoverage3"], "label": "Coverage3" }
+	]
+}
