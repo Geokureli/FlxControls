@@ -25,11 +25,15 @@ jobs:
       with:
         haxe-version: ${{matrix.haxe-version}}
     
-    - name: "Configure Haxelib"
+    - name: Set HAXEPATH
       run: |
-        haxelib setup /home/runner/haxe/haxelib/
-        haxelib install haxelib
-        haxelib install
+        echo "HAXEPATH=$HAXE_STD_PATH/.." >> $GITHUB_ENV
+    
+    # - name: "Configure Haxelib"
+    #   run: |
+    #     haxelib setup /home/runner/haxe/haxelib/
+    #     haxelib install haxelib
+    #     haxelib install
     
     - name: Install Haxe dependencies
       run: |
