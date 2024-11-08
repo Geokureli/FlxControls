@@ -52,6 +52,6 @@ jobs:
         haxelib run openfl setup -alias -y
     - name: Run tests
       run: |
-        haxelib run openfl build tests/coverage ${{matrix.haxe-version}} -Dcoverage1
-        haxelib run openfl build tests/coverage ${{matrix.haxe-version}} -Dcoverage2
-        haxelib run openfl build tests/coverage ${{matrix.haxe-version}} -Dcoverage3
+        haxelib run openfl build tests/coverage ${{matrix.target}} -Dcoverage1
+        haxelib run openfl build tests/coverage ${{matrix.target}} -Dcoverage2
+        haxelib run openfl build tests/coverage ${{matrix.target}} -Dcoverage3
