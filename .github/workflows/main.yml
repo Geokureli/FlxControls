@@ -32,17 +32,25 @@ jobs:
     
     - name: Install Haxe dependencies
       run: |
-        haxelib install hxcpp  --quiet
-        haxelib install lime   --quiet
-        haxelib install openfl --quiet
-        haxelib install utest  --quiet
+        haxelib install hxcpp      --quiet
+        haxelib install lime       --quiet
+        haxelib install openfl     --quiet
+        haxelib install utest      --quiet
+        haxelib install nape-haxe4 --quiet
+        haxelib install spinehaxe  --quiet
     
     - name: Install Git Flixel
       if: ${{matrix.flixel-version}} == 'git'
-      run: haxelib git flixel https://github.com/HaxeFlixel/flixel.git --quiet
+      run: |
+        haxelib git flixel        https://github.com/HaxeFlixel/flixel.git        --quiet
+        haxelib git flixel-addons https://github.com/HaxeFlixel/flixel-addons.git --quiet
+        haxelib git flixel-ui     https://github.com/HaxeFlixel/flixel-ui.git     --quiet
     - name: Install Latest Flixel
       if: ${{matrix.flixel-version}} == 'latest'
-      run: haxelib install flixel --quiet
+      run: |
+        haxelib install flixel        --quiet
+        haxelib install flixel-addons --quiet
+        haxelib install flixel-ui     --quiet
     
     - name: Install command aliases
       run: |
