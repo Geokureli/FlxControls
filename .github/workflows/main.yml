@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  repository_dispatch:
+  schedule:
+    - cron: '0 4 * * *'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        haxe-version: ["4.3.4"]
+        target: [html5, hl, cpp]
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+    - run: sudo apt-get update
+    
+    - uses: actions/checkout@v3
+    
+    - uses: krdlab/setup-haxe@v1
+      with:
+        haxe-version: ${{matrix.haxe-version}}
+    
+    - name: "Configure Haxelib"
+      run: |
+        haxelib setup /home/runner/haxe/haxelib/
+        haxelib install haxelib
+        haxelib install
+    
+    - name: Install Haxe dependencies
+      run: |
+        haxelib install hxcpp  --quiet
+        haxelib install lime   --quiet
+        haxelib install openfl --quiet
+        haxelib install flixel --quiet
+        haxelib install utest  --quiet
+    
+    # - name: Setup environment
+    #   run: |
+    #     haxelib dev openfl ${{ github.workspace }}
+    - name: Install command aliases
+      run: |
+        haxelib run lime setup -alias -y
+        haxelib run openfl setup -alias -y
+    - name: Run tests
+      run: |
+        haxelib run openfl build tests/coverage ${{matrix.haxe-version}} -Dcoverage1
+        haxelib run openfl build tests/coverage ${{matrix.haxe-version}} -Dcoverage2
+        haxelib run openfl build tests/coverage ${{matrix.haxe-version}} -Dcoverage3
