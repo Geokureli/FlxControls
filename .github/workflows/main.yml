@@ -38,11 +38,15 @@ jobs:
         haxelib install utest         --quiet
         haxelib install nape-haxe4    --quiet
         haxelib install spinehaxe     --quiet
+    
+    - name: Install Latest Flixel
+      if: ${{matrix.flixel-version == 'latest'}}
+      run: |
         haxelib install flixel        --quiet
         haxelib install flixel-addons --quiet
         haxelib install flixel-ui     --quiet
     
-    - name: Set Flixel Version
+    - name: Install Git Flixel
       if: ${{matrix.flixel-version == 'git'}}
       run: |
         haxelib git flixel        https://github.com/HaxeFlixel/flixel.git        --quiet
