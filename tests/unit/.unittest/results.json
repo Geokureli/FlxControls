@@ -1,0 +1,42 @@
+{
+	"classes": [
+		{
+			"id": "tests.TestMain",
+			"methods": [
+				{
+					"errorPos": null,
+					"executionTime": null,
+					"line": 30,
+					"message": null,
+					"name": "testAddIfValid",
+					"state": "success",
+					"timestamp": 5.932
+				},
+				{
+					"errorPos": null,
+					"executionTime": null,
+					"line": 16,
+					"message": null,
+					"name": "testDefaultMappings",
+					"state": "success",
+					"timestamp": 5.932
+				},
+				{
+					"errorPos": null,
+					"executionTime": null,
+					"line": 24,
+					"message": null,
+					"name": "testGroups",
+					"state": "success",
+					"timestamp": 5.933
+				}
+			],
+			"name": "tests.TestMain",
+			"pos": {
+				"file": "source/tests/TestMain.hx",
+				"line": 8
+			}
+		}
+	],
+	"name": "root"
+}

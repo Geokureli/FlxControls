@@ -68,6 +68,8 @@ class PlayState extends FlxState
 		// Player orb
 		player = new PlayerOrb(levelMinX + levelWidth / 2, levelMinY + levelHeight / 2);
 		add(player);
+		
+		#if html5
 		// if the player is using a virtual pad, add it to the state
 		if (FlxG.html5.onMobile)
 		{
@@ -75,6 +77,7 @@ class PlayState extends FlxState
 			player.controls.setVirtualPad(pad);
 			add(pad);
 		}
+		#end
 		
 		// Other orbs
 		for (i in 0...5)
