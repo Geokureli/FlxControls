@@ -76,12 +76,12 @@ jobs:
         haxelib run openfl build tests/coverage ${{matrix.target}} -Dcoverage3
     
     - name: Run unit tests
-      if: ${{matrix.flixel-version != 'html5'}}
+      if: ${{matrix.target != 'html5'}}
       run: |
         haxelib run openfl test tests/unit ${{matrix.target}} -debug
     
     - name: Build unit tests
-      if: ${{matrix.flixel-version == 'html5'}}
+      if: ${{matrix.target == 'html5'}}
       run: |
         echo "Can't run unit tests on html5"
         haxelib run openfl build tests/unit ${{matrix.target}} -debug
