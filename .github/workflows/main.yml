@@ -17,7 +17,8 @@ jobs:
         # target: [html5, hl, cpp]
         flixel-version: [git, latest]
       fail-fast: false
-    runs-on: ubuntu-latest
+    # runs-on: ubuntu-latest
+    runs-on: macos-13
     steps:
     - run: sudo apt-get update
     
