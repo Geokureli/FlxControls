@@ -13,8 +13,8 @@ jobs:
     strategy:
       matrix:
         haxe-version: ["4.3.4"]
-        target: [html5, hl]
-        # target: [html5, hl, cpp]
+        # target: [html5, hl]
+        target: [html5, hl, cpp]
         flixel-version: [git, stable]
       fail-fast: false
     # runs-on: ubuntu-latest
