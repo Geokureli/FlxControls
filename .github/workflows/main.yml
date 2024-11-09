@@ -66,13 +66,18 @@ jobs:
     
     - name: Build samples
       run: |
+        echo "Building Bare sample"
         haxelib run openfl build samples/Bare ${{matrix.target}}
+        echo "Building FlxcCamera sample"
         haxelib run openfl build samples/FlxCamera ${{matrix.target}}
     
     - name: Build coverage
       run: |
+        echo "Building coverage1"
         haxelib run openfl build tests/coverage ${{matrix.target}} -Dcoverage1
+        echo "Building coverage2"
         haxelib run openfl build tests/coverage ${{matrix.target}} -Dcoverage2
+        echo "Building coverage3"
         haxelib run openfl build tests/coverage ${{matrix.target}} -Dcoverage3
     
     - name: Run unit tests
