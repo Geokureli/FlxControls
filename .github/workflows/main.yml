@@ -15,7 +15,7 @@ jobs:
         haxe-version: ["4.3.4"]
         target: [html5, hl]
         # target: [html5, hl, cpp]
-        flixel-version: [git, latest]
+        flixel-version: [git, stable]
       fail-fast: false
     # runs-on: ubuntu-latest
     runs-on: macos-13
@@ -42,7 +42,7 @@ jobs:
         haxelib install spinehaxe     --quiet
     
     - name: Install Latest Flixel
-      if: ${{matrix.flixel-version == 'latest'}}
+      if: ${{matrix.flixel-version == 'stable'}}
       run: |
         haxelib install flixel        --quiet
         haxelib install flixel-addons --quiet
@@ -64,24 +64,24 @@ jobs:
         haxelib run lime setup -alias -y
         haxelib run openfl setup -alias -y
     
+    - name: Build samples
+      run: |
+        haxelib run openfl build samples/Bare ${{matrix.target}}
+        haxelib run openfl build samples/FlxCamera ${{matrix.target}}
+    
     - name: Build coverage
       run: |
         haxelib run openfl build tests/coverage ${{matrix.target}} -Dcoverage1
         haxelib run openfl build tests/coverage ${{matrix.target}} -Dcoverage2
         haxelib run openfl build tests/coverage ${{matrix.target}} -Dcoverage3
     
-    - name: Build samples
-      run: |
-        haxelib run openfl build samples/Bare ${{matrix.target}}
-        haxelib run openfl build samples/FlxCamera ${{matrix.target}}
-    
     - name: Run unit tests
       if: ${{matrix.flixel-version != 'html5'}}
       run: |
-        haxelib run openfl test samples/Bare ${{matrix.target}}
+        haxelib run openfl test tests/unit ${{matrix.target}} -debug
     
     - name: Build unit tests
       if: ${{matrix.flixel-version == 'html5'}}
       run: |
         echo "Can't run unit tests on html5"
-        haxelib run openfl build samples/Bare ${{matrix.target}}
+        haxelib run openfl build tests/unit ${{matrix.target}} -debug
