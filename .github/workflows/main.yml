@@ -20,9 +20,9 @@ jobs:
     # runs-on: ubuntu-latest
     runs-on: macos-13
     steps:
-    - run: sudo apt-get update
+    # - run: sudo apt-get update
     
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - uses: krdlab/setup-haxe@v1
       with:
