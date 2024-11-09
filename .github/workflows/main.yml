@@ -78,7 +78,7 @@ jobs:
     - name: Run unit tests
       if: ${{matrix.flixel-version != 'html5'}}
       run: |
-        haxelib run openfl build tests/unit ${{matrix.target}} -debug
+        haxelib run openfl test tests/unit ${{matrix.target}} -debug
     
     - name: Build unit tests
       if: ${{matrix.flixel-version == 'html5'}}
