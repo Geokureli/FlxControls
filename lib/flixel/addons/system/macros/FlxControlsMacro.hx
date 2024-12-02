@@ -199,10 +199,13 @@ class FlxControlsMacro
         }
         catch (e) {} // The generated type doesn't exist yet
         
-        final actionCT = enumFields[0].actionCT;
+        
         // define the type
-        // final listCT = (macro: );
-        final def = macro class $name extends flixel.addons.input.FlxDigitalSet<$actionCT> { }
+        final def = macro class $name { }
+        final actionCT = enumFields[0].actionCT;
+        final listCT = (macro: flixel.addons.input.FlxDigitalSet<$actionCT>);
+        def.kind = TDAbstract(listCT, [listCT], [listCT]);
+        
         def.meta.push({ name:":forward", pos:Context.currentPos() });
         
         for (field in enumFields)
