@@ -262,7 +262,7 @@ class FlxControlsMacro
     static function buildDefaultMapField(actions:Array<ActionFieldData>):Field
     {
         final actionCT = actions[0].actionCT;
-        final mapCT = (macro: ActionMap<$actionCT>);
+        final mapCT = (macro: flixel.addons.input.FlxControls.ActionMap<$actionCT>);
         // Only add filters with default inputs set
         final actions = actions.filter((a)->a.hasDefaults());
         return (macro class TempClass
