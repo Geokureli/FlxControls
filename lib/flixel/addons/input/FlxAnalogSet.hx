@@ -14,6 +14,7 @@ import flixel.input.keyboard.FlxKey;
 import flixel.math.FlxMath;
 import flixel.util.FlxAxes;
 import flixel.util.FlxDirection;
+import flixel.util.FlxDirectionFlags;
 
 @:forward
 abstract FlxAnalogSet1D<TAction:EnumValue>(FlxAnalogSet1DBase<TAction>) to FlxAnalogSet1DBase<TAction>
@@ -249,6 +250,32 @@ class FlxAnalogDirections2D<TAction:EnumValue>
     public function toString()
     {
         return '( u: $up | d: $down | l: $left | r: $right)';
+    }
+    
+    /**
+     * Checks the digital component of the given direction. For example: `UP` will check `up`
+     */
+    public function check(dir:FlxDirection)
+    {
+        return switch dir
+        {
+            case UP: up;
+            case DOWN: down;
+            case LEFT: left;
+            case RIGHT: right;
+        }
+    }
+    
+    /**
+     * Checks the digital components of the given direction flags.
+     * For example: `(UP | DOWN)` will check `up || down`
+     */
+    public function any(dir:FlxDirectionFlags)
+    {
+        return (dir.has(UP   ) && up   )
+            || (dir.has(DOWN ) && down )
+            || (dir.has(LEFT ) && left )
+            || (dir.has(RIGHT) && right);
     }
 }
 
