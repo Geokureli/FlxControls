@@ -748,21 +748,25 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
             // case FlxInputDevice.IFLXINPUT_OBJECT:
             //     virtualPad != null;
             case FlxInputDevice.KEYBOARD:
-                FlxG.keys.pressed.ANY;
+                #if FLX_KEYBOARD FlxG.keys.pressed.ANY #else false #end;
             case FlxInputDevice.MOUSE:
-                #if (flixel < "5.9.0")
-                FlxG.mouse.deltaScreenX != 0 || FlxG.mouse.deltaScreenY != 0
+                #if FLX_MOUSE
+                    #if (flixel < "5.9.0")
+                    FlxG.mouse.deltaScreenX != 0 || FlxG.mouse.deltaScreenY != 0
+                    #else
+                    FlxG.mouse.deltaViewX != 0 || FlxG.mouse.deltaViewY != 0
+                    #end
+                    || FlxG.mouse.pressed || FlxG.mouse.justReleased
+                    #if FLX_MOUSE_ADVANCED
+                    || FlxG.mouse.pressedMiddle || FlxG.mouse.justReleasedMiddle
+                    || FlxG.mouse.pressedRight || FlxG.mouse.justReleasedRight
+                    #end
+                    || FlxG.mouse.wheel != 0;
                 #else
-                FlxG.mouse.deltaViewX != 0 || FlxG.mouse.deltaViewY != 0
+                false;
                 #end
-                || FlxG.mouse.pressed || FlxG.mouse.justReleased
-                #if FLX_MOUSE_ADVANCED
-                || FlxG.mouse.pressedMiddle || FlxG.mouse.justReleasedMiddle
-                || FlxG.mouse.pressedRight || FlxG.mouse.justReleasedRight
-                #end
-                || FlxG.mouse.wheel != 0
-                ;
             case FlxInputDevice.GAMEPAD:
+                #if FLX_GAMEPAD
                 switch gamepadID
                 {
                     case ID(id):
@@ -776,6 +780,9 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
                     case NONE:
                         false;
                 }
+                #else
+                false;
+                #end
             case found:
                 throw 'Unhandled device: ${found.getName()}';
         }
@@ -783,6 +790,7 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
     
     public function getActiveGamepad():Null<FlxGamepad>
     {
+        #if FLX_GAMEPAD
         return switch gamepadID
         {
             case ID(id):
@@ -792,6 +800,9 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
             case NONE:
                 null;
         }
+        #else
+        return null;
+        #end
     }
 }
 

@@ -1,0 +1,28 @@
+{
+	"tests.TestMain": {
+		"pos": {
+			"line": 8,
+			"file": "source/tests/TestMain.hx"
+		},
+		"methods": {
+			"teardown": {
+				"line": 36
+			},
+			"testGroups": {
+				"line": 24
+			},
+			"testAddIfValid": {
+				"line": 30
+			},
+			"testDefaultMappings": {
+				"line": 16
+			},
+			"setup": {
+				"line": 11
+			},
+			"controls": {
+				"line": 10
+			}
+		}
+	}
+}

@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  repository_dispatch:
+  schedule:
+    - cron: '0 4 * * *'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        # haxe-version: ["4.3.4"]
+        # target: [html5, hl]
+        target: [html5, hl, cpp]
+        flixel-version: [git, stable]
+      fail-fast: false
+    # runs-on: ubuntu-latest
+    runs-on: macos-13
+    steps:
+    # - run: sudo apt-get update
+    
+    - uses: actions/checkout@v4
+    
+    - uses: krdlab/setup-haxe@v1
+      with:
+        # haxe-version: ${{matrix.haxe-version}}
+        haxe-version: "4.3.4"
+    
+    - name: Set HAXEPATH
+      run: |
+        echo "HAXEPATH=$HAXE_STD_PATH/.." >> $GITHUB_ENV
+    
+    - name: Install Haxe dependencies
+      run: |
+        haxelib install hxcpp         --quiet
+        haxelib install lime          --quiet
+        haxelib install openfl        --quiet
+        haxelib install utest         --quiet
+        haxelib install nape-haxe4    --quiet
+        haxelib install spinehaxe     --quiet
+    
+    - name: Install Latest Flixel
+      if: ${{matrix.flixel-version == 'stable'}}
+      run: |
+        haxelib install flixel        --quiet
+        haxelib install flixel-addons --quiet
+        haxelib install flixel-ui     --quiet
+    
+    - name: Install Git Flixel
+      if: ${{matrix.flixel-version == 'git'}}
+      run: |
+        haxelib git flixel        https://github.com/HaxeFlixel/flixel.git        --quiet
+        haxelib git flixel-addons https://github.com/HaxeFlixel/flixel-addons.git --quiet
+        haxelib git flixel-ui     https://github.com/HaxeFlixel/flixel-ui.git     --quiet
+    
+    - name: List dependencies
+      run: |
+        haxelib list
+    
+    - name: Install command aliases
+      run: |
+        haxelib run lime setup -alias -y
+        haxelib run openfl setup -alias -y
+    
+    - name: Build samples
+      run: |
+        echo "Building Bare sample"
+        haxelib run openfl build samples/Bare ${{matrix.target}}
+        echo "Building FlxcCamera sample"
+        haxelib run openfl build samples/FlxCamera ${{matrix.target}}
+    
+    - name: Build coverage
+      run: |
+        echo "Building coverage1"
+        haxelib run openfl build tests/coverage ${{matrix.target}} -Dcoverage1
+        echo "Building coverage2"
+        haxelib run openfl build tests/coverage ${{matrix.target}} -Dcoverage2
+        echo "Building coverage3"
+        haxelib run openfl build tests/coverage ${{matrix.target}} -Dcoverage3
+    
+    - name: Run unit tests
+      if: ${{matrix.target != 'html5'}}
+      run: |
+        haxelib run openfl test tests/unit ${{matrix.target}} -debug
+    
+    - name: Build unit tests
+      if: ${{matrix.target == 'html5'}}
+      run: |
+        echo "Can't run unit tests on html5"
+        haxelib run openfl build tests/unit ${{matrix.target}} -debug

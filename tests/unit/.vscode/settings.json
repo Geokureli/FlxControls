@@ -8,4 +8,10 @@
     , "../../../../lib/flixel/tests/coverage/source"
     , "../../../../lib/flixel/tests/unit/src"
     ]
+,   "haxeTestExplorer.testCommand":
+    [ "haxelib", "run", "openfl", "test"
+    // , "../../lib/flixel/tests/unit"
+    , "hl", "-clean"
+    , "--haxelib=test-adapter"
+    ]
 }
