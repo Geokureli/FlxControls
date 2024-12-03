@@ -14,6 +14,7 @@ import flixel.input.keyboard.FlxKey;
 import flixel.math.FlxMath;
 import flixel.util.FlxAxes;
 import flixel.util.FlxDirection;
+import flixel.util.FlxDirectionFlags;
 
 @:forward
 abstract FlxAnalogSet1D<TAction:EnumValue>(FlxAnalogSet1DBase<TAction>) to FlxAnalogSet1DBase<TAction>
@@ -250,6 +251,32 @@ class FlxAnalogDirections2D<TAction:EnumValue>
     {
         return '( u: $up | d: $down | l: $left | r: $right)';
     }
+    
+    /**
+     * Checks the digital component of the given direction. For example: `UP` will check `up`
+     */
+    public function check(dir:FlxDirection)
+    {
+        return switch dir
+        {
+            case UP: up;
+            case DOWN: down;
+            case LEFT: left;
+            case RIGHT: right;
+        }
+    }
+    
+    /**
+     * Checks the digital components of the given direction flags.
+     * For example: `(UP | DOWN)` will check `up || down`
+     */
+    public function any(dir:FlxDirectionFlags)
+    {
+        return (dir.has(UP   ) && up   )
+            || (dir.has(DOWN ) && down )
+            || (dir.has(LEFT ) && left )
+            || (dir.has(RIGHT) && right);
+    }
 }
 
 /**
@@ -283,10 +310,11 @@ class FlxControlAnalog extends FlxActionAnalog
                 addGamepad1D(up, down, parent.gamepadID);
             case Gamepad(Multi(up, down, right, left)):
                 addGamepad2D(up, down, right, left, parent.gamepadID);
-            case Gamepad(DPad):
-                addGamepad2D(DPAD_UP, DPAD_DOWN, DPAD_RIGHT, DPAD_LEFT, parent.gamepadID);
-            case Gamepad(Face):
-                addGamepad2D(Y, A, B, X, parent.gamepadID);
+            case Gamepad(DPad)
+                | Gamepad(Face)
+                | Gamepad(LeftStickDigital)
+                | Gamepad(RightStickDigital):
+                addInputType(parent, input.simplify());
             
             // Mouse
             case Mouse(Drag(id, axis, scale, deadzone, invert)):
@@ -305,10 +333,9 @@ class FlxControlAnalog extends FlxActionAnalog
                 addKeys1D(up, down);
             case Keyboard(Multi(up, down, right, left)):
                 addKeys2D(up, down, right, left);
-            case Keyboard(Arrows):
-                addKeys2D(UP, DOWN, RIGHT, LEFT);
-            case Keyboard(WASD):
-                addKeys2D(W, S, D, A);
+            case Keyboard(Arrows)
+                | Keyboard(WASD):
+                addInputType(parent, input.simplify());
             case Keyboard(Lone(found)):
                 throw 'Internal error - Unexpected Keyboard($found)';
             
@@ -318,7 +345,7 @@ class FlxControlAnalog extends FlxActionAnalog
             case VirtualPad(Multi(up, down, right, left)):
                 @:privateAccess addVPad2D(parent.vPadProxies, up, down, right, left);
             case VirtualPad(Arrows):
-                @:privateAccess addVPad2D(parent.vPadProxies, UP, DOWN, RIGHT, LEFT);
+                addInputType(parent, input.simplify());
             case VirtualPad(Lone(found)):
                 throw 'Internal error - Unexpected VirtualPad($found)';
         }
