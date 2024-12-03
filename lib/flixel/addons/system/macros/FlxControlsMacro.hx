@@ -199,10 +199,13 @@ class FlxControlsMacro
         }
         catch (e) {} // The generated type doesn't exist yet
         
-        final actionCT = enumFields[0].actionCT;
+        
         // define the type
-        // final listCT = (macro: );
-        final def = macro class $name extends flixel.addons.input.FlxDigitalSet<$actionCT> { }
+        final def = macro class $name { }
+        final actionCT = enumFields[0].actionCT;
+        final listCT = (macro: flixel.addons.input.FlxDigitalSet<$actionCT>);
+        def.kind = TDAbstract(listCT, [listCT], [listCT]);
+        
         def.meta.push({ name:":forward", pos:Context.currentPos() });
         
         for (field in enumFields)
@@ -262,7 +265,7 @@ class FlxControlsMacro
     static function buildDefaultMapField(actions:Array<ActionFieldData>):Field
     {
         final actionCT = actions[0].actionCT;
-        final mapCT = (macro: ActionMap<$actionCT>);
+        final mapCT = (macro: flixel.addons.input.FlxControls.ActionMap<$actionCT>);
         // Only add filters with default inputs set
         final actions = actions.filter((a)->a.hasDefaults());
         return (macro class TempClass
