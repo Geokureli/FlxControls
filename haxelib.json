@@ -1,0 +1,11 @@
+{ "name"        : "flixel-controls"
+, "description" : "A simplified multi-device input manager tools for HaxeFlixel."
+, "version"     : "0.0.0"
+, "releasenote" : "Initial release"
+, "url"         : "https://github.com/Geokureli/FlxControls"
+, "classPath"   : "lib"
+, "license"     : "MIT"
+, "tags"        : ["flixel", "input", "gamepad", "controls"]
+, "contributors": ["GeoKureli"]
+, "dependencies": { "flixel": "" }
+}
