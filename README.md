@@ -5,6 +5,18 @@ A simplified multi-device input manager tools for HaxeFlixel
 
 Allows you to easily define all possible player actions, whether the action represents digital or analog data and what device inputs each action is mapped to, by default. As shown above, extending FlxControls causes macros to generate handy fields for each action.
 
+## Setup
+
+  1. Install flixel-controls (coming soon to haxelib, just github for now).
+     
+     Command Line:
+     ```haxelib git flixel-controls http://github.com/Geokureli/FlxControls```
+  2. Include flixel-controls in your project.xml:  
+     
+     ```xml
+     <haxelib name="flixel-controls"/>
+     ```
+     
 ## Digital Actions
 Using the ["Bare" sample](samples/Bare/source/Action.hx) as an example, `UP`, `DOWN`, `LEFT` and `RIGHT` are digital actions, as they are tied to things like gamepad buttons or keyboard keys. Digital actions create fields which can be used to check the status of actions, like so:
 ```hx
