@@ -95,6 +95,8 @@ To get a list of every conflict in the current setup, use the `checkAllGroupConf
 
 ## To Dos
 - Schema for saving input mappings
+- Way to disable FlxControl instances
+- Allow custom holdRepeat timings (specifically allow multiple timings to exists at once)
 - Example input remapping UI
 - Add way to disable keyboard and mouse for specific instances of `FlxControls`
 - Add way to get key labels for non-english keyboards
