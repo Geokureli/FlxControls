@@ -1,3 +1,5 @@
+![](https://github.com/Geokureli/FlxControls/blob/master/images/flixel-controls.png?raw=true)
+
 # FlxControls
 A simplified multi-device input manager tools for HaxeFlixel
 
