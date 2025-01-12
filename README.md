@@ -104,7 +104,7 @@ To get a list of every conflict in the current setup, use the `checkAllGroupConf
 - [Example input remapping UI](https://github.com/Geokureli/FlxControls/issues/9)
 - [Add way to get key labels for non-english keyboards](https://github.com/Geokureli/FlxControls/issues/10)
 - [Map each `FlxControlMappedInput` to an image in Kenney's input prompts](https://github.com/Geokureli/FlxControls/issues/11)
-- ~~Add groups~~
 - [Add custom digital/analog action](https://github.com/Geokureli/FlxControls/issues/3)
 - [Add contextual actions](https://github.com/Geokureli/FlxControls/issues/12)
 - [Input buffering](https://github.com/Geokureli/FlxControls/issues/13)
+- ~~Add groups~~
