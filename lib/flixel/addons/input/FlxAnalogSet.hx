@@ -58,11 +58,26 @@ abstract FlxAnalogSet1DBase<TAction:EnumValue>(FlxAnalogSet<TAction>) to FlxAnal
     inline function get_justReleased() return this.justReleased;
     
     /**
-     * Helper for extracting digital directional states from an analog action.
+     * Helper for extracting digital directional states from a 2D analog action.
      * It is similar to `justPressed` but holding the input for 0.5s will make it fire every 0.1s
      */
+    @:deprecated("holdRepeat is deprecated, use repeat(), instead")
     public var holdRepeat(get, never):FlxAnalogDirections1D<TAction>;
-    inline function get_holdRepeat() return this.holdRepeat;
+    inline function get_holdRepeat()
+    {
+        return repeat(REPEAT_DELAY, INITIAL_DELAY);
+    }
+    
+    /**
+     * A repeating  event, similar to `justPressed` but holding the
+     * input for some `initial` time will make it fire every repeatedly.
+     * @param repeat   How often to repeat the event
+     * @param initial  How long until the second firing
+     */
+    public function repeat(repeat = 0.1, initial = 0.0):FlxAnalogDirections1D<TAction>
+    {
+        return this.getRepeater(repeat, initial);
+    }
 }
 
 @:forward
@@ -112,8 +127,66 @@ abstract FlxAnalogSet2DBase<TAction:EnumValue>(FlxAnalogSet<TAction>) to FlxAnal
      * Helper for extracting digital directional states from a 2D analog action.
      * It is similar to `justPressed` but holding the input for 0.5s will make it fire every 0.1s
      */
+    @:deprecated("holdRepeat is deprecated, use repeat(0.1, 0.5), instead")
     public var holdRepeat(get, never):FlxAnalogDirections2D<TAction>;
-    inline function get_holdRepeat() return this.holdRepeat;
+    inline function get_holdRepeat()
+    {
+        return repeat(REPEAT_DELAY, INITIAL_DELAY);
+    }
+    
+    /**
+     * A repeating  event, similar to `justPressed` but holding the
+     * input for some `initial` time will make it fire every repeatedly.
+     * @param repeat   How often to repeat the event
+     * @param initial  How long until the second firing
+     */
+    public function repeat(repeat = 0.1, initial = 0.0):FlxAnalogDirections2D<TAction>
+    {
+        return this.getRepeater(repeat, initial);
+    }
+}
+
+inline var INITIAL_DELAY = 0.5;
+inline var REPEAT_DELAY = 0.1;
+
+@:forward
+private abstract FloatMap<T>(Map<Int, T>) from Map<Int, T>
+{
+    inline public function new () { this = []; }
+    
+    @:arrayAccess
+    inline public function set(key:Float, value:T)
+    {
+        this.set(toKey(key), value);
+    }
+    
+    @:arrayAccess
+    inline public function get(key:Float)
+    {
+        return this.get(toKey(key));
+    }
+    
+    inline public function exists(key:Float)
+    {
+        return this.exists(toKey(key));
+    }
+    
+    inline public function copy():FloatMap<T>
+    {
+        return this.copy();
+    }
+    
+	// public function toString():String {} // TODO:
+    
+    inline public function remove(key:Float)
+    {
+        return this.remove(toKey(key));
+    }
+    
+    static function toKey(f:Float):Int
+    {
+        return Math.round(f * 1000);
+    }
 }
 
 /**
@@ -128,7 +201,7 @@ class FlxAnalogSet<TAction:EnumValue>
     final justPressed:FlxAnalogDirections2D<TAction>;
     final released:FlxAnalogDirections2D<TAction>;
     final justReleased:FlxAnalogDirections2D<TAction>;
-    final holdRepeat:FlxAnalogDirections2D<TAction>;
+    final repeaters = new FloatMap<FloatMap<FlxAnalogDirections2D<TAction>>>();
     
     var upInput = new FlxRepeatInput<FlxDirection>(UP);
     var downInput = new FlxRepeatInput<FlxDirection>(DOWN);
@@ -150,8 +223,18 @@ class FlxAnalogSet<TAction:EnumValue>
         released     = new FlxAnalogDirections2D(this, (i)->i.hasState(RELEASED     ));
         justPressed  = new FlxAnalogDirections2D(this, (i)->i.hasState(JUST_PRESSED ));
         justReleased = new FlxAnalogDirections2D(this, (i)->i.hasState(JUST_RELEASED));
-        holdRepeat   = new FlxAnalogDirections2D(this, (i)->i.triggerRepeat());
     }
+    
+    #if (FLX_DEBUG && FlxControls.dev)
+    public function addDebugWatchers()
+    {
+        final id = name.split("-")[0].split(":").pop();
+        FlxG.watch.addFunction('$id-U', ()->   upInput.toString());
+        FlxG.watch.addFunction('$id-D', ()-> downInput.toString());
+        FlxG.watch.addFunction('$id-L', ()-> leftInput.toString());
+        FlxG.watch.addFunction('$id-R', ()->rightInput.toString());
+    }
+    #end
     
     function destroy()
     {
@@ -161,7 +244,7 @@ class FlxAnalogSet<TAction:EnumValue>
         justPressed.destroy();
         released.destroy();
         justReleased.destroy();
-        holdRepeat.destroy();
+        repeaters.clear();
     }
     
     function update()
@@ -172,6 +255,17 @@ class FlxAnalogSet<TAction:EnumValue>
         downInput.updateWithState(control.y < 0);
         rightInput.updateWithState(control.x > 0);
         leftInput.updateWithState(control.x < 0);
+    }
+    
+    function getRepeater(repeat:Float, initial:Float):FlxAnalogDirections2D<TAction>
+    {
+        if (false == repeaters.exists(repeat))
+            repeaters[repeat] = new FloatMap<FlxAnalogDirections2D<TAction>>();
+        
+        if (false == repeaters[repeat].exists(initial))
+            repeaters[repeat][initial] = new FlxAnalogDirections2D(this, (i)->i.triggerRepeat(repeat, initial));
+        
+        return repeaters[repeat][initial];
     }
     
     /**

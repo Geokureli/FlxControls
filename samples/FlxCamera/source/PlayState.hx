@@ -104,6 +104,10 @@ class PlayState extends FlxState
 		FlxG.worldBounds.set(levelMinX, levelMinY, levelWidth, levelHeight);
 		FlxG.camera.follow(player, followStyles[0], 1);
 		deadzoneOverlay.redraw(FlxG.camera); // now that deadzone is present
+		
+		#if (FLX_DEBUG && FlxControls.dev)
+		player.controls.STYLE.addDebugWatchers();
+		#end
 	}
 	
 	override public function update(elapsed:Float):Void
@@ -112,10 +116,10 @@ class PlayState extends FlxState
 		
 		hud.updateInfo(player.controls);
 		
-		final style = player.controls.STYLE.holdRepeat;
-		final lerp = player.controls.LERP.holdRepeat;
-		final lead = player.controls.LEAD.holdRepeat;
-		final zoom = player.controls.ZOOM.holdRepeat;
+		final style = player.controls.STYLE.repeat(0.2);
+		final lerp = player.controls.LERP.repeat(0.2);
+		final lead = player.controls.LEAD.repeat(0.2);
+		final zoom = player.controls.ZOOM.repeat(0.2);
 		
 		if (style.up  ) setStyle(1);
 		if (style.down) setStyle(-1);
