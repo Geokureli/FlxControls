@@ -112,9 +112,9 @@ class FlxDigitalSet<TAction:EnumValue>
 
 class FlxControlRepeatDigital extends FlxActionDigital
 {
-    public var input:Null<FlxRepeatInput<Int>>;
-    public final intitial:Float;
-    public final repeat:Float;
+    final input:Null<FlxRepeatInput<Int>>;
+    final intitial:Float;
+    final repeat:Float;
     
     public function new (name, intitial = 0.5, repeat = 0.1, ?callback)
     {
@@ -281,7 +281,7 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
     {
         if (this is FlxControlRepeatDigital)
         {
-            return Std.downcast(this, FlxControlRepeatDigital).input.toString();
+            return Std.downcast(this, FlxControlRepeatDigital).toString();
         }
         
         return Std.string(this.triggered);
