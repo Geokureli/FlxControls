@@ -484,16 +484,16 @@ class FlxControlAnalog extends FlxActionAnalog
     
     inline function addGamepadInput(inputID:FlxGamepadInputID, axis, gamepadID:FlxDeviceID)
     {
-        add(new AnalogGamepad(inputID, this.trigger, axis, gamepadID));
+        add(new ActionInputAnalogGamepad(inputID, this.trigger, axis, gamepadID));
     }
     
     function removeGamepadInput(inputID:FlxGamepadInputID, axis)
     {
         for (input in this.inputs)
         {
-            if (input is AnalogGamepad)
+            if (input is ActionInputAnalogGamepad)
             {
-                final input:AnalogGamepad = cast input;
+                final input:ActionInputAnalogGamepad = cast input;
                 if (input.inputID == inputID && input.axis == axis)
                 {
                     this.remove(input);
@@ -762,7 +762,7 @@ private class ActionInputAnalog extends FlxActionInputAnalog
     }
 }
 
-private class AnalogGamepad extends ActionInputAnalog
+private class ActionInputAnalogGamepad extends ActionInputAnalog
 {
     /**
     * Gamepad action input for analog (trigger, joystick, touchpad, etc) events
