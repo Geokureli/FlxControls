@@ -31,6 +31,11 @@ class FlxDigitalSet<TAction:EnumValue>
     var parent:FlxControls<TAction>;
     var name:String;
     
+    
+    #if (FLX_DEBUG && FlxControls.dev)
+    public var enableDebugWatchers:Bool = false;
+    #end
+    
     public function new(parent, event)
     {
         this.event = event;
@@ -64,7 +69,13 @@ class FlxDigitalSet<TAction:EnumValue>
     function update()
     {
         for (control in mappings)
+        {
             control.update();
+            #if (FLX_DEBUG && FlxControls.dev)
+            if (enableDebugWatchers)
+                FlxG.watch.addQuick(control.name, control.toString());
+            #end
+        }
     }
     
     public function check(action:TAction)
@@ -102,10 +113,14 @@ class FlxDigitalSet<TAction:EnumValue>
 class FlxControlRepeatDigital extends FlxActionDigital
 {
     public var input:Null<FlxRepeatInput<Int>>;
+    public final intitial:Float;
+    public final repeat:Float;
     
-    public function new (name, ?callback)
+    public function new (name, intitial = 0.5, repeat = 0.1, ?callback)
     {
         input = new FlxRepeatInput(0);
+        this.intitial = intitial;
+        this.repeat = repeat;
         super(name, callback);
     }
     
@@ -118,7 +133,12 @@ class FlxControlRepeatDigital extends FlxActionDigital
     
     override function check():Bool
     {
-        return input.triggerRepeat();
+        return input.triggerRepeat(intitial, repeat);
+    }
+    
+    override function toString()
+    {
+        return input.toString();
     }
 }
 
@@ -127,15 +147,20 @@ class FlxControlRepeatDigital extends FlxActionDigital
  */
 @:allow(flixel.addons.input.FlxDigitalSet)
 @:access(flixel.addons.input.FlxControls)
-@:forward(check, update, destroy)
+@:forward(check, update, destroy, name)
 abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
 {
     function new (name, event, ?callback)
     {
-        if (event == REPEAT)
-            this = new FlxControlRepeatDigital(name, callback);
-        else
-            this = new FlxActionDigital(name, callback);
+        this = switch event
+        {
+            case REPEAT_CUSTOM(initial, repeat):
+                new FlxControlRepeatDigital(name, initial, repeat, callback);
+            case REPEAT:
+                new FlxControlRepeatDigital(name, callback);
+            default:
+                new FlxActionDigital(name, callback);
+        }
     }
     
     function add<TAction:EnumValue>(parent:FlxControls<TAction>, input:FlxControlInputType, state)
@@ -147,7 +172,7 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
             case Keyboard(found):
                 throw 'Internal error - Unexpected Keyboard($found)';
             case Gamepad(Lone(id)):
-                this.addGamepad(id, state, parent.gamepadID.toDeviceID());
+                this.addGamepad(id, state, parent.gamepadID.toLegacy());
             case Gamepad(found):
                 throw 'Internal error - Unexpected Gamepad($found)';
             case VirtualPad(Lone(id)):
@@ -248,7 +273,17 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
         for (input in this.inputs)
         {
             if (input.device == GAMEPAD)
-                input.deviceID = id.toDeviceID();
+                input.deviceID = id.toLegacy();
         }
+    }
+    
+    public function toString()
+    {
+        if (this is FlxControlRepeatDigital)
+        {
+            return Std.downcast(this, FlxControlRepeatDigital).input.toString();
+        }
+        
+        return Std.string(this.triggered);
     }
 }

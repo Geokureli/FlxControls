@@ -130,7 +130,9 @@ class PlayState extends FlxState
 		if (zoom.up  ) setZoom(.1);
 		if (zoom.down) setZoom(-.1);
 		
-		if (player.controls.justPressed.SHAKE) FlxG.camera.shake();
+		final repeatSet = player.controls.repeat(1.0);
+		if (repeatSet.check(SHAKE)) FlxG.camera.shake();
+		// if (repeatSet.SHAKE) FlxG.camera.shake();
 	}
 	
 	public function setZoom(delta:Float)

@@ -208,6 +208,10 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
     // @:noCompletion inline function get_justPressed () { return digitalSets[JUST_PRESSED ]; }
     // @:noCompletion inline function get_justReleased() { return digitalSets[JUST_RELEASED]; }
     
+    // inline public function repeat(delay = 0.1) return getRepeater(0, delay);
+    // inline public function waitAndRepeat(initialDelay = 0.5, repeatDelay = 0.1)
+    //    return getRepeater(initialDelay, repeatDelay);
+    
     final digitalSets = new Map<DigitalEvent, FlxDigitalSet<TAction>>();
     final analogSets = new Map<TAction, FlxAnalogSet<TAction>>();
     
@@ -247,7 +251,10 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
         
         // Initialize the digital lists
         for (event in DigitalEvent.createAll())
-            digitalSets[event] = new FlxDigitalSet(this, event);
+        {
+            if (false == event.match(REPEAT_CUSTOM(_, _)))
+                digitalSets[event] = new FlxDigitalSet(this, event);
+        }
         
         addMappings(getDefaultMappings());
         
@@ -270,11 +277,11 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
     {
         manager.destroy();
         
-        for (list in digitalSets)
-            list.destroy();
+        for (set in digitalSets)
+            set.destroy();
         
-        for (list in analogSets)
-            list.destroy();
+        for (set in analogSets)
+            set.destroy();
         
         digitalSets.clear();
         analogSets.clear();
@@ -312,7 +319,22 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
      * @param   id  Can either be a specific gamepad ID via `ID(myGamepad.id)`, or
      * a generic term like `FIRST_ACTIVE` or `all`
      */
-    public function setGamepadID(id:FlxDeviceID)
+    inline overload extern public function setGamepadID(id:FlxDeviceID)
+    {
+        setGamepadIDHelper(id);
+    }
+    
+    /**
+     * The gamepad to use
+     * 
+     * @param   id  The id of the gamepad
+     */
+    inline overload extern public function setGamepadID(id:Int)
+    {
+        setGamepadIDHelper(FlxDeviceIDTools.fromLegacy(id));
+    }
+    
+    function setGamepadIDHelper(id:FlxDeviceID)
     {
         if (gamepadID == id)
             return;
@@ -491,12 +513,46 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
      * Whether the specified action is in the target state
      * 
      * @param   action  An action the player can perform
-     * @param   event   The event to check for. Possible values:
-     * `PRESSED`, `JUST_PRESSED`, `RELEASED`, `JUST_RELEASED` and `REPEAT`
+     * @param   event   The event to check for. Possible values:  `REPEAT_CUSTOM`
      */
-    inline public function checkDigital(action:TAction, event:DigitalEvent)
+    public function checkDigital(action:TAction, event:DigitalEvent)
     {
+        if (false == digitalSets.exists(event))
+        {
+            if (event.match(REPEAT_CUSTOM(_, _)))
+                getRepeaterHelper(event);
+            else
+                throw 'Unexpected event: $event';
+        }
+            
+        
         digitalSets[event].check(action);
+    }
+    
+    function getRepeater(initial:Float, repeat:Float)
+    {
+        return getRepeaterHelper(REPEAT_CUSTOM(initial, repeat));
+    }
+    
+    function getRepeaterHelper(event)
+    {
+        // if (event.match(REPEAT_CUSTOM(_, _)) && 
+        if (false == digitalSets.exists(event))
+        {
+            final set = new FlxDigitalSet(this, event);
+            digitalSets[event] = set;
+            for (action=>inputs in inputsByAction)
+            {
+                // Add all the existing digital inputs to the new set // TODO: can this be improved
+                for (input in inputs)
+                {
+                    if (input.isDigital())
+                        set.add(action, input);
+                }
+            }
+        }
+        
+        return digitalSets[event];
     }
     
     /**
@@ -569,8 +625,8 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
         
         if (input.isDigital())
         {
-            for (list in digitalSets)
-                list.add(action, input);
+            for (set in digitalSets)
+                set.add(action, input);
         }
         
         if (input.isAnalog())
@@ -823,50 +879,49 @@ private class VirtualPadInputProxy implements IFlxInput
     public function new () {}
 }
 
-/**
- * Used to reference specific gamepads by id or with less specific terms like `FIRST_ACTIVE`
- */
-abstract FlxDeviceID(FlxDeviceIDRaw) from FlxDeviceIDRaw
-{
-    @:from
-    static public function fromInt(id:Int):FlxDeviceID
-    {
-        return switch (id)
-        {
-            case FlxInputDeviceID.FIRST_ACTIVE:
-                FlxDeviceIDRaw.FIRST_ACTIVE;
-            case FlxInputDeviceID.ALL:
-                FlxDeviceIDRaw.ALL;
-            case FlxInputDeviceID.NONE:
-                FlxDeviceIDRaw.NONE;
-            default:
-                ID(id);
-        }
-    }
-    
-    // @:to
-    public function toDeviceID():Int
-    {
-        return switch this
-        {
-            case FlxDeviceIDRaw.FIRST_ACTIVE:
-                FlxInputDeviceID.FIRST_ACTIVE;
-            case FlxDeviceIDRaw.ALL:
-                FlxInputDeviceID.ALL;
-            case FlxDeviceIDRaw.NONE:
-                FlxInputDeviceID.NONE;
-            case ID(id):
-                id;
-        }
-    }
-}
-
-enum FlxDeviceIDRaw
+@:using(flixel.addons.input.FlxControls.FlxDeviceIDTools)
+enum FlxDeviceID
 {
     FIRST_ACTIVE;
     ALL;
     NONE;
     ID(id:Int);
+}
+
+/**
+ * Used to reference specific gamepads by id or with less specific terms like `FIRST_ACTIVE`
+ */
+class FlxDeviceIDTools
+{
+    static public function fromLegacy(id:FlxInputDeviceID):FlxDeviceID
+    {
+        return switch (id)
+        {
+            case FlxInputDeviceID.FIRST_ACTIVE:
+                FlxDeviceID.FIRST_ACTIVE;
+            case FlxInputDeviceID.ALL:
+                FlxDeviceID.ALL;
+            case FlxInputDeviceID.NONE:
+                FlxDeviceID.NONE;
+            default:
+                FlxDeviceID.ID(id);
+        }
+    }
+    
+    static public function toLegacy(deviceID:FlxDeviceID):Int
+    {
+        return switch deviceID
+        {
+            case FlxDeviceID.FIRST_ACTIVE:
+                FlxInputDeviceID.FIRST_ACTIVE;
+            case FlxDeviceID.ALL:
+                FlxInputDeviceID.ALL;
+            case FlxDeviceID.NONE:
+                FlxInputDeviceID.NONE;
+            case FlxDeviceID.ID(id):
+                id;
+        }
+    }
 }
 
 @:using(flixel.addons.input.FlxControls.DigitalEventTools)
@@ -877,6 +932,7 @@ enum DigitalEvent
     JUST_PRESSED;
     RELEASED;
     JUST_RELEASED;
+    REPEAT_CUSTOM(initial:Float, repeatDelay:Float);
     REPEAT;
 }
 
@@ -897,10 +953,14 @@ private class DigitalEventTools
     {
         return switch event
         {
-            case PRESSED | REPEAT: FlxInputState.PRESSED;
-            case JUST_PRESSED    : FlxInputState.JUST_PRESSED;
-            case RELEASED        : FlxInputState.RELEASED;
-            case JUST_RELEASED   : FlxInputState.JUST_RELEASED;
+            case PRESSED | REPEAT | REPEAT_CUSTOM(_, _): // throw on repeat?
+                FlxInputState.PRESSED;
+            case JUST_PRESSED:
+                FlxInputState.JUST_PRESSED;
+            case RELEASED:
+                FlxInputState.RELEASED;
+            case JUST_RELEASED:
+                FlxInputState.JUST_RELEASED;
         }
     }
 }

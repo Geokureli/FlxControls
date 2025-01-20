@@ -5,7 +5,7 @@ class FlxRepeatInput<T> extends flixel.input.FlxInput<T>
     var timer:Float = 0;
     var prevTimer:Float = 0;
     
-    public function triggerRepeat(repeat:Float, initial:Float):Bool
+    public function triggerRepeat(initial:Float, repeat:Float):Bool
     {
         return justPressed || (timer > initial && (timer % repeat) < (prevTimer % repeat));
     }
