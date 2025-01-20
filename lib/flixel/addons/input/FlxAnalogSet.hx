@@ -59,7 +59,7 @@ abstract FlxAnalogSet1DBase<TAction:EnumValue>(FlxAnalogSet<TAction>) to FlxAnal
     inline function get_justReleased() return this.justReleased;
     
     /**
-     * Helper for extracting digital directional states from a 2D analog action.
+     * Helper for extracting digital directional states from an analog action.
      * It is similar to `justPressed` but holding the input for 0.5s will make it fire every 0.1s
      */
     @:deprecated("holdRepeat is deprecated, use waitAndRepeat(), instead")
@@ -166,7 +166,6 @@ abstract FlxAnalogSet2DBase<TAction:EnumValue>(FlxAnalogSet<TAction>) to FlxAnal
         return this.getRepeater(initialDelay, repeatDelay);
     }
 }
-
 
 /**
  * Manages analog actions. There is usually only 1 of these per FlxControls instance, and it's only
@@ -754,12 +753,122 @@ class FlxControlAnalog extends FlxActionAnalog
 
 private class ActionInputAnalog extends FlxActionInputAnalog
 {
-    #if (flixel < "5.9.0")
-    public function new (device, inputId, trigger:FlxAnalogState, axes = EITHER, deviceId = FlxInputDeviceID.FIRST_ACTIVE)
+    public function new (device, inputId, trigger:FlxAnalogState, axes = EITHER, deviceID = FlxDeviceID.FIRST_ACTIVE)
     {
-        super(device, inputId, (cast trigger:FlxInputState), axes, deviceID);
+        #if (flixel < "5.9.0")
+        final trigger:FlxInputState = cast trigger;
+        #end
+        super(device, inputId, trigger, axes, deviceID.toLegacy());
+    }
+}
+
+private class AnalogGamepad extends ActionInputAnalog
+{
+    /**
+    * Gamepad action input for analog (trigger, joystick, touchpad, etc) events
+    * @param   inputID    "universal" gamepad input ID (LEFT_TRIGGER, RIGHT_ANALOG_STICK, TILT_PITCH, etc)
+    * @param   trigger    What state triggers this action (MOVED, JUST_MOVED, STOPPED, JUST_STOPPED)
+    * @param   axis       which axes to monitor for triggering: X, Y, EITHER, or BOTH
+    * @param   gamepadID  specific gamepad ID, or FlxInputDeviceID.FIRST_ACTIVE / ALL
+    */
+    public function new(inputID:FlxGamepadInputID, trigger, axis = FlxAnalogAxis.EITHER, gamepadID = FlxDeviceID.FIRST_ACTIVE)
+    {
+        super(FlxInputDevice.GAMEPAD, inputID, trigger, axis, gamepadID);
+        checkInputId(inputID);
+    }
+    
+    function checkInputId(inputID:FlxGamepadInputID)
+    {
+        switch (inputID)
+        {
+            case LEFT_ANALOG_STICK | RIGHT_ANALOG_STICK
+                | LEFT_TRIGGER | RIGHT_TRIGGER
+                | POINTER_X | POINTER_Y
+                | DPAD:
+            case found:
+                throw 'Unexpected inputID: $found';
+        }
+    }
+    
+    override public function update():Void
+    {
+        #if FLX_GAMEPAD
+        final numPads = FlxG.gamepads.numActiveGamepads;
+        switch FlxDeviceIDTools.fromLegacy(deviceID)
+        {
+            case ALL:
+                for (i in 0...numPads)
+                {
+                    if (pollGamepad(FlxG.gamepads.getByID(i)))
+                        break;
+                }
+            case FIRST_ACTIVE:
+                pollGamepadSafe(FlxG.gamepads.getFirstActiveGamepad());
+            case ID(id) if (numPads > id):
+                pollGamepadSafe(FlxG.gamepads.getByID(id));
+            case NONE | ID(_):
+                updateValues(0, 0);
+        }
+        #else
+        updateValues(0, 0);
+        #end
+    }
+    
+    #if FLX_GAMEPAD
+    function pollGamepadSafe(gamepad:Null<FlxGamepad>):Bool
+    {
+        if (gamepad != null)
+            return pollGamepad(gamepad);
+        
+        updateValues(0, 0);
+        return false;
+    }
+    
+    function pollGamepad(gamepad:FlxGamepad):Bool
+    {
+        inline function updateHelper(x:Float, y:Float):Bool
+        {
+            updateValues(x, y);
+            return x != 0 || y != 0;
+        }
+        
+        final values = gamepad.analog.value;
+        return switch (inputID:FlxGamepadInputID)
+        {
+            case FlxGamepadInputID.LEFT_ANALOG_STICK:
+                updateHelper(values.LEFT_STICK_X, values.LEFT_STICK_Y);
+                
+            case FlxGamepadInputID.RIGHT_ANALOG_STICK:
+                updateHelper(values.RIGHT_STICK_X, values.RIGHT_STICK_Y);
+                
+            case FlxGamepadInputID.LEFT_TRIGGER:
+                updateHelper(values.LEFT_TRIGGER, 0);
+            
+            case FlxGamepadInputID.RIGHT_TRIGGER:
+                updateHelper(values.RIGHT_TRIGGER, 0);
+                
+            case FlxGamepadInputID.POINTER_X:
+                updateHelper(values.POINTER_X, 0);
+                
+            case FlxGamepadInputID.POINTER_Y:
+                updateHelper(values.POINTER_Y, 0);
+                
+            case FlxGamepadInputID.DPAD:
+                final pressed = gamepad.pressed;
+                updateHelper
+                    ( (pressed.DPAD_RIGHT ? 1 : 0) - (pressed.DPAD_LEFT ? 1 : 0)
+                    , (pressed.DPAD_DOWN  ? 1 : 0) - (pressed.DPAD_UP   ? 1 : 0)
+                    );
+            case found:
+                throw 'Unexpected inputID: $found';
+        }
     }
     #end
+    
+    override function updateValues(x:Float, y:Float)
+    {
+        super.updateValues(x, -y);
+    }
 }
 
 function checkKey(key:FlxKey):Float
@@ -856,7 +965,7 @@ private class Analog1DGamepad extends ActionInputAnalog
     {
         this.up = up;
         this.down = down;
-        super(GAMEPAD, -1, trigger, X, gamepadID.toLegacy());
+        super(GAMEPAD, -1, trigger, X, gamepadID);
     }
     
     override function update()
@@ -865,115 +974,6 @@ private class Analog1DGamepad extends ActionInputAnalog
         final newX = checkPad(up, deviceID) - checkPad(down, deviceID);
         updateValues(newX, 0);
         #end
-    }
-}
-
-private class AnalogGamepad extends FlxActionInputAnalog
-{
-    /**
-    * Gamepad action input for analog (trigger, joystick, touchpad, etc) events
-    * @param   inputID    "universal" gamepad input ID (LEFT_TRIGGER, RIGHT_ANALOG_STICK, TILT_PITCH, etc)
-    * @param   trigger    What state triggers this action (MOVED, JUST_MOVED, STOPPED, JUST_STOPPED)
-    * @param   axis       which axes to monitor for triggering: X, Y, EITHER, or BOTH
-    * @param   gamepadID  specific gamepad ID, or FlxInputDeviceID.FIRST_ACTIVE / ALL
-    */
-    public function new(inputID:FlxGamepadInputID, trigger, axis = FlxAnalogAxis.EITHER, gamepadID = FlxDeviceID.FIRST_ACTIVE)
-    {
-        super(FlxInputDevice.GAMEPAD, inputID, trigger, axis, gamepadID.toLegacy());
-        checkInputId(inputID);
-    }
-    
-    function checkInputId(inputID:FlxGamepadInputID)
-    {
-        switch (inputID)
-        {
-            case LEFT_ANALOG_STICK | RIGHT_ANALOG_STICK
-                | LEFT_TRIGGER | RIGHT_TRIGGER
-                | POINTER_X | POINTER_Y
-                | DPAD:
-            case found:
-                throw 'Unexpected inputID: $found';
-        }
-    }
-    
-    override public function update():Void
-    {
-        #if FLX_GAMEPAD
-        final numPads = FlxG.gamepads.numActiveGamepads;
-        switch FlxDeviceIDTools.fromLegacy(deviceID)
-        {
-            case ALL:
-                for (i in 0...numPads)
-                {
-                    if (pollGamepad(FlxG.gamepads.getByID(i)))
-                        break;
-                }
-            case FIRST_ACTIVE:
-                pollGamepadSafe(FlxG.gamepads.getFirstActiveGamepad());
-            case ID(id) if (numPads > id):
-                pollGamepadSafe(FlxG.gamepads.getByID(id));
-            case NONE | ID(_):
-                updateValues(0, 0);
-        }
-        #else
-        updateValues(0, 0);
-        #end
-    }
-    
-    #if FLX_GAMEPAD
-    function pollGamepadSafe(gamepad:Null<FlxGamepad>):Bool
-    {
-        if (gamepad != null)
-            return pollGamepad(gamepad);
-        
-        updateValues(0, 0);
-        return false;
-    }
-    
-    function pollGamepad(gamepad:FlxGamepad):Bool
-    {
-        inline function updateHelper(x:Float, y:Float):Bool
-        {
-            updateValues(x, y);
-            return x != 0 || y != 0;
-        }
-        
-        final values = gamepad.analog.value;
-        return switch (inputID:FlxGamepadInputID)
-        {
-            case FlxGamepadInputID.LEFT_ANALOG_STICK:
-                updateHelper(values.LEFT_STICK_X, values.LEFT_STICK_Y);
-                
-            case FlxGamepadInputID.RIGHT_ANALOG_STICK:
-                updateHelper(values.RIGHT_STICK_X, values.RIGHT_STICK_Y);
-                
-            case FlxGamepadInputID.LEFT_TRIGGER:
-                updateHelper(values.LEFT_TRIGGER, 0);
-            
-            case FlxGamepadInputID.RIGHT_TRIGGER:
-                updateHelper(values.RIGHT_TRIGGER, 0);
-
-            case FlxGamepadInputID.POINTER_X:
-                updateHelper(values.POINTER_X, 0);
-
-            case FlxGamepadInputID.POINTER_Y:
-                updateHelper(values.POINTER_Y, 0);
-
-            case FlxGamepadInputID.DPAD:
-                final pressed = gamepad.pressed;
-                updateHelper
-                    ( (pressed.DPAD_RIGHT ? 1 : 0) - (pressed.DPAD_LEFT ? 1 : 0)
-                    , (pressed.DPAD_DOWN  ? 1 : 0) - (pressed.DPAD_UP   ? 1 : 0)
-                    );
-            case found:
-                throw 'Unexpected inputID: $found';
-        }
-    }
-    #end
-    
-    override function updateValues(x:Float, y:Float)
-    {
-        super.updateValues(x, -y);
     }
 }
 
@@ -991,7 +991,7 @@ private class Analog2DGamepad extends ActionInputAnalog
         this.right = right;
         this.left = left;
         
-        super(GAMEPAD, -1, trigger, EITHER, gamepadID.toLegacy());
+        super(GAMEPAD, -1, trigger, EITHER, gamepadID);
     }
     
     override function update()
