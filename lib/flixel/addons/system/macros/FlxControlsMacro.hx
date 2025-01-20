@@ -136,6 +136,7 @@ class FlxControlsMacro
             public var justReleased(get, never):$digitalSetCT;
             
             /** Similar to `justPressed` but holding the input for 0.5s will make it fire every 0.1s */
+            @:deprecated("holdRepeat is deprecated, use waitAndRepeat() instead")
             public var holdRepeat  (get, never):$digitalSetCT;
             
             @:noCompletion inline function get_pressed     () { return cast digitalSets[flixel.addons.input.FlxControls.DigitalEvent.PRESSED      ]; }
@@ -143,6 +144,27 @@ class FlxControlsMacro
             @:noCompletion inline function get_justPressed () { return cast digitalSets[flixel.addons.input.FlxControls.DigitalEvent.JUST_PRESSED ]; }
             @:noCompletion inline function get_justReleased() { return cast digitalSets[flixel.addons.input.FlxControls.DigitalEvent.JUST_RELEASED]; }
             @:noCompletion inline function get_holdRepeat  () { return cast digitalSets[flixel.addons.input.FlxControls.DigitalEvent.REPEAT       ]; }
+            
+            /**
+             * An event that fires when just pressed, then repeats at the given interval
+             * 
+             * @param   delay  How often to fire the event
+             */
+            inline public function repeat(delay = 0.1):$digitalSetCT
+            {
+                return cast getRepeater(0.0, delay);
+            }
+            
+            /**
+             * An event that fires when just pressed, then repeats after the initial time
+             * 
+             * @param   initialDelay  How long after the initial press to start repeating
+             * @param   repeatDelay   How often to fire the event
+             */
+            inline public function waitAndRepeat(initialDelay = 0.5, repeatDelay = 0.1):$digitalSetCT
+            {
+                return cast getRepeater(initialDelay, repeatDelay);
+            }
         }).fields;
         
         /** Helper to concat without creating a new array */

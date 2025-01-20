@@ -2,41 +2,38 @@ package flixel.addons.input;
 
 class FlxRepeatInput<T> extends flixel.input.FlxInput<T>
 {
-    inline static var INITIAL_DELAY = 0.5;
-    inline static var REPEAT_DELAY = 0.1;
-    
     var timer:Float = 0;
-    var repeatTriggered = false;
+    var prevTimer:Float = 0;
     
-    public function triggerRepeat():Bool
+    public function triggerRepeat(initial:Float, repeat:Float):Bool
     {
-        return repeatTriggered;
+        return justPressed || (timer > initial && (timer % repeat) < (prevTimer % repeat));
     }
     
     public function updateWithState(isPressed:Bool)
     {
-        repeatTriggered = false;
         if (pressed)
         {
+            prevTimer = timer;
             timer += FlxG.elapsed;
-            repeatTriggered = timer >= REPEAT_DELAY;
-            if (repeatTriggered)
-                timer -= REPEAT_DELAY;
         }
         
         if (isPressed && released)
         {
             press();
-            timer = REPEAT_DELAY - INITIAL_DELAY;
-            repeatTriggered = true;
         }
         
         if (!isPressed && pressed)
         {
             release();
-            timer = 0;
+            prevTimer = timer = 0;
         }
         
         update();
+    }
+    
+    public function toString()
+    {
+        return '{ current:$current, timer: $timer }';
     }
 }

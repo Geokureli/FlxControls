@@ -1,10 +1,13 @@
 package ;
 
+import flixel.addons.input.FlxControls;
 import flixel.FlxG;
+import flixel.FlxSprite;
 import flixel.input.FlxInput;
 import flixel.input.keyboard.FlxKey;
 import flixel.ui.FlxVirtualPad;
 import input.Controls;
+import input.Controls2;
 
 class Main extends openfl.display.Sprite
 {
@@ -13,6 +16,65 @@ class Main extends openfl.display.Sprite
         super();
         
         addChild(new flixel.FlxGame(0, 0, BootState, 20, 20));
+        // addChild(new flixel.FlxGame(0, 0, BootState2, 20, 20));
+    }
+}
+
+
+class BootState2 extends flixel.FlxState
+{
+    var controls:Controls2;
+    var sprite:FlxSprite;
+    
+    override function create()
+    {
+        controls = new Controls2("test");
+        #if (flixel < "5.9.0")
+        FlxG.inputs.add(controls);
+        #else
+        FlxG.inputs.addInput(controls);
+        #end
+        
+        controls.setGamepadID(FlxDeviceID.FIRST_ACTIVE);
+        
+        add(sprite = new FlxSprite(10, 10).makeGraphic(20, 20));
+        sprite.origin.set(0, 0);
+    }
+    
+    override function update(elapsed:Float)
+    {
+        super.update(elapsed);
+        
+        final repeatMove = controls.repeat(0.2);
+        final repeatColor = controls.repeat(0.1);
+        // final repeatMove = controls.MOVE.repeat(0.5);
+        final repeatScale = controls.MOVE.repeat(0.5);
+        #if (FLX_DEBUG && FlxControls.dev)
+        // repeatMove.enableDebugWatchers = true;
+        // repeatColor.enableDebugWatchers = true;
+        controls.MOVE.enableDebugWatchers = true;
+        #end
+        
+        if (repeatMove.L) sprite.x -= sprite.width;
+        if (repeatMove.R) sprite.x += sprite.width;
+        if (repeatMove.U) sprite.y -= sprite.height;
+        if (repeatMove.D) sprite.y += sprite.height;
+        if (repeatColor.any([U,D,L,R])) sprite.color = sprite.color == 0xFFffffff ? 0xFFff0000 : 0xFFffffff;
+        
+        // if (repeatMove.left ) sprite.x -= sprite.width;
+        // if (repeatMove.right) sprite.x += sprite.width;
+        // if (repeatMove.up   ) sprite.y -= sprite.height;
+        // if (repeatMove.down ) sprite.y += sprite.height;
+        
+        if (repeatScale.left ) sprite.scale.x -= 1.0;
+        if (repeatScale.right) sprite.scale.x += 1.0;
+        if (repeatScale.up   ) sprite.scale.y -= 1.0;
+        if (repeatScale.down ) sprite.scale.y += 1.0;
+        
+        if (sprite.scale.x < 1) sprite.scale.x = 1;
+        if (sprite.scale.y < 1) sprite.scale.y = 1;
+        sprite.width = sprite.scale.x * sprite.frameWidth;
+        sprite.height = sprite.scale.y * sprite.frameHeight;
     }
 }
 
@@ -56,7 +118,7 @@ class BootState extends flixel.FlxState
         FlxG.watch.addFunction("down"  , ()->controls.pressed.DOWN  );
         FlxG.watch.addFunction("left"  , ()->controls.pressed.LEFT  );
         FlxG.watch.addFunction("right" , ()->controls.pressed.RIGHT );
-        FlxG.watch.addFunction("right-rp" , ()->controls.holdRepeat.RIGHT );
+        FlxG.watch.addFunction("right-rp" , ()->controls.waitAndRepeat(0.5, 0.1).RIGHT );
         
         FlxG.watch.addFunction("cam-up" , ()->{
             // trace(controls.CAM.pressed);
@@ -66,7 +128,7 @@ class BootState extends flixel.FlxState
         FlxG.watch.addFunction("cam-left" , ()->controls.CAM.pressed.left ); 
         FlxG.watch.addFunction("cam-right", ()->controls.CAM.pressed.right);
         FlxG.watch.addFunction("cam-up"   , ()->controls.CAM.pressed.up   );
-        FlxG.watch.addFunction("cam-right-rp", ()->controls.CAM.holdRepeat.right);
+        // FlxG.watch.addFunction("cam-right-rp", ()->controls.CAM.holdRepeat.right);
         
         // // Check if multiple actions are pressed like so:
         FlxG.watch.addFunction("l/r"   , ()->controls.pressed.any([LEFT, RIGHT]));
