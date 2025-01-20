@@ -20,13 +20,13 @@ import flixel.input.keyboard.FlxKey as Key;
  */
 enum Action2
 {
-    // @:inputs([Key.W, GPad.DPAD_UP   , RIGHT_STICK_DIGITAL_UP   ]) U;
-    // @:inputs([Key.S, GPad.DPAD_DOWN , RIGHT_STICK_DIGITAL_DOWN ]) D;
-    // @:inputs([Key.A, GPad.DPAD_LEFT , RIGHT_STICK_DIGITAL_LEFT ]) L;
-    // @:inputs([Key.D, GPad.DPAD_RIGHT, RIGHT_STICK_DIGITAL_RIGHT]) R;
+    @:inputs([Key.W, GPad.DPAD_UP   , RIGHT_STICK_DIGITAL_UP   ]) U;
+    @:inputs([Key.S, GPad.DPAD_DOWN , RIGHT_STICK_DIGITAL_DOWN ]) D;
+    @:inputs([Key.A, GPad.DPAD_LEFT , RIGHT_STICK_DIGITAL_LEFT ]) L;
+    @:inputs([Key.D, GPad.DPAD_RIGHT, RIGHT_STICK_DIGITAL_RIGHT]) R;
     
-    // @:inputs([ArrowKeys, Face, LEFT_ANALOG_STICK])
-    @:inputs([ArrowKeys, Face, DPad, LEFT_ANALOG_STICK, RIGHT_ANALOG_STICK])
+    @:inputs([ArrowKeys, Face, LEFT_ANALOG_STICK])
+    // @:inputs([ArrowKeys, Face, DPad, LEFT_ANALOG_STICK, RIGHT_ANALOG_STICK])
     @:analog(x, y) MOVE;
 }
 

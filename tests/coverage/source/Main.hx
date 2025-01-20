@@ -15,8 +15,8 @@ class Main extends openfl.display.Sprite
     {
         super();
         
-        addChild(new flixel.FlxGame(0, 0, BootState2, 20, 20));
-        // addChild(new flixel.FlxGame(0, 0, BootState, 20, 20));
+        addChild(new flixel.FlxGame(0, 0, BootState, 20, 20));
+        // addChild(new flixel.FlxGame(0, 0, BootState2, 20, 20));
     }
 }
 
@@ -47,7 +47,7 @@ class BootState2 extends flixel.FlxState
         
         final repeatMove = controls.repeat(0.2);
         final repeatColor = controls.repeat(0.1);
-        final repeatMove = controls.MOVE.repeat(0.5);
+        // final repeatMove = controls.MOVE.repeat(0.5);
         final repeatScale = controls.MOVE.repeat(0.5);
         #if (FLX_DEBUG && FlxControls.dev)
         // repeatMove.enableDebugWatchers = true;
