@@ -139,6 +139,8 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
                 | Keyboard(WASD):
                 true;
                 
+            case VirtualPad(Lone(STICK)):
+                true;
             case VirtualPad(Lone(_)):
                 false;
             case VirtualPad(Multi(_, _, _, _))
@@ -179,6 +181,8 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
                 | Keyboard(WASD):
                 false;
                 
+            case VirtualPad(Lone(STICK)):
+                false;
             case VirtualPad(Lone(_)):
                 true;
             case VirtualPad(Multi(_, _, _, _))
@@ -442,7 +446,7 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
         }
     }
     
-    #if (flixel >= "5.9.0")
+    #if (flixel >= version("5.9.0"))
     /**
      * Finds a device specific id for every input that can be attached to an action. For gamepads it will use
      * identifiers such as `WII_REMOTE(A)` or `PS4(SQUARE)`. For keyboard, the button label is returned.
@@ -583,4 +587,5 @@ enum abstract FlxVirtualPadInputID(String)
     var C     = "c";
     var X     = "x";
     var Y     = "y";
+    var STICK = "stick";
 }

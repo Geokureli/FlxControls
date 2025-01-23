@@ -1,5 +1,6 @@
 package flixel.addons.input;
 
+import flixel.ui.FlxVirtualStick;
 import flixel.addons.input.FlxAnalogSet;
 import flixel.addons.input.FlxControlInputType;
 import flixel.addons.input.FlxDigitalSet;
@@ -215,6 +216,8 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
     final digitalSets = new Map<DigitalEvent, FlxDigitalSet<TAction>>();
     final analogSets = new Map<TAction, FlxAnalogSet<TAction>>();
     
+    /** Used internally for FlxVirtualPads */
+    final vPadStickProxy = new VirtualPadStickProxy();
     /** Used internally for FlxVirtualPads */
     final vPadProxies:VPadMap =
         [ UP   => new VirtualPadInputProxy()
@@ -486,6 +489,7 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
     public function setVirtualPad(pad:FlxVirtualPad)
     {
         virtualPad = pad;
+        #if (flixel <= version("5.9.0"))
         vPadProxies[FlxVirtualPadInputID.A    ].target = pad.buttonA;
         vPadProxies[FlxVirtualPadInputID.B    ].target = pad.buttonB;
         vPadProxies[FlxVirtualPadInputID.C    ].target = pad.buttonC;
@@ -495,6 +499,18 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
         vPadProxies[FlxVirtualPadInputID.UP   ].target = pad.buttonUp;
         vPadProxies[FlxVirtualPadInputID.RIGHT].target = pad.buttonRight;
         vPadProxies[FlxVirtualPadInputID.DOWN ].target = pad.buttonDown;
+        #else
+        vPadProxies[FlxVirtualPadInputID.A    ].target = pad.getButton(A);
+        vPadProxies[FlxVirtualPadInputID.B    ].target = pad.getButton(B);
+        vPadProxies[FlxVirtualPadInputID.C    ].target = pad.getButton(C);
+        vPadProxies[FlxVirtualPadInputID.Y    ].target = pad.getButton(Y);
+        vPadProxies[FlxVirtualPadInputID.X    ].target = pad.getButton(X);
+        vPadProxies[FlxVirtualPadInputID.LEFT ].target = pad.getButton(LEFT);
+        vPadProxies[FlxVirtualPadInputID.UP   ].target = pad.getButton(UP);
+        vPadProxies[FlxVirtualPadInputID.RIGHT].target = pad.getButton(RIGHT);
+        vPadProxies[FlxVirtualPadInputID.DOWN ].target = pad.getButton(DOWN);
+        vPadStickProxy.target = pad.stick;
+        #end
     }
     
     /**
@@ -731,7 +747,7 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
         return inputsByAction[action];
     }
     
-    #if (flixel >= "5.9.0")
+    #if (flixel >= version("5.9.0"))
     /**
      * Returns a device specific id for every input that can be attached to an action. For gamepads it will use
      * identifiers such as `WII_REMOTE(A)` or `PS4(SQUARE)`. For keyboard, the button label is returned.
@@ -807,7 +823,7 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
                 #if FLX_KEYBOARD FlxG.keys.pressed.ANY #else false #end;
             case FlxInputDevice.MOUSE:
                 #if FLX_MOUSE
-                    #if (flixel < "5.9.0")
+                    #if (flixel < version("5.9.0"))
                     FlxG.mouse.deltaScreenX != 0 || FlxG.mouse.deltaScreenY != 0
                     #else
                     FlxG.mouse.deltaViewX != 0 || FlxG.mouse.deltaViewY != 0
@@ -860,6 +876,13 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
         return null;
         #end
     }
+}
+
+class VirtualPadStickProxy
+{
+    public var target:Null<FlxVirtualStick> = null;
+    
+    public function new () {}
 }
 
 private class VirtualPadInputProxy implements IFlxInput

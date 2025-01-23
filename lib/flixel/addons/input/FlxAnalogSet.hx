@@ -418,6 +418,8 @@ class FlxControlAnalog extends FlxActionAnalog
                 @:privateAccess addVPad2D(parent.vPadProxies, up, down, right, left);
             case VirtualPad(Arrows):
                 addInputType(parent, input.simplify());
+            case VirtualPad(Lone(STICK)):
+                @:privateAccess addVPadStick(parent.vPadStickProxy);
             case VirtualPad(Lone(found)):
                 throw 'Internal error - Unexpected VirtualPad($found)';
         }
@@ -475,6 +477,8 @@ class FlxControlAnalog extends FlxActionAnalog
                 removeVPad2D(up, down, right, left);
             case VirtualPad(Arrows):
                 removeVPad2D(UP, DOWN, RIGHT, LEFT);
+            case VirtualPad(Lone(STICK)):
+                removeVPadStick();
             case VirtualPad(Lone(found)):
                 throw 'Internal error - Unexpected VirtualPad(Lone($found))';
         }
@@ -527,7 +531,7 @@ class FlxControlAnalog extends FlxActionAnalog
         }
     }
     
-    function removeMouseDrag(buttonId, axis)
+    function removeMouseDrag(buttonID, axis)
     {
         final inputs:Array<AnalogAction> = cast this.inputs;
         for (input in inputs)
@@ -535,7 +539,7 @@ class FlxControlAnalog extends FlxActionAnalog
             @:privateAccess
             if (input is AnalogMouseDragAction
             && axis == input.axis
-            && (cast input:AnalogMouseDragAction).button == buttonId)
+            && (cast input:AnalogMouseDragAction).buttonID == buttonID)
             {
                 this.remove(input);
                 break;
@@ -656,6 +660,11 @@ class FlxControlAnalog extends FlxActionAnalog
         add(new Analog2DVPadAction(proxies, this.trigger, up, down, right, left));
     }
     
+    function addVPadStick(proxy:VirtualPadStickProxy)
+    {
+        add(new VPadStickAction(proxy, this.trigger));
+    }
+    
     function removeVPad1D(up, down)
     {
         for (input in this.inputs)
@@ -691,6 +700,15 @@ class FlxControlAnalog extends FlxActionAnalog
         }
     }
     
+    function removeVPadStick()
+    {
+        for (input in this.inputs)
+        {
+            if (input is VPadStickAction)
+                this.remove(cast input);
+        }
+    }
+    
     public function setGamepadID(id:FlxDeviceID)
     {
         for (input in this.inputs)
@@ -700,7 +718,7 @@ class FlxControlAnalog extends FlxActionAnalog
         }
     }
     
-    #if (flixel < "5.9.0")
+    #if (flixel < version("5.9.0"))
     /**
      * See if this action has been triggered
      */

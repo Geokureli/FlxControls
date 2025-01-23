@@ -157,7 +157,7 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
             case REPEAT_CUSTOM(initial, repeat):
                 new FlxControlRepeatDigital(name, initial, repeat, callback);
             case REPEAT:
-                new FlxControlRepeatDigital(name, callback);
+                new FlxControlRepeatDigital(name, 0.5, 0.1, callback);
             default:
                 new FlxActionDigital(name, callback);
         }
