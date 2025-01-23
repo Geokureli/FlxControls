@@ -45,7 +45,7 @@ class Player extends FlxSprite
 	function addInputs():Void
 	{
 		controls = new Controls("Main");
-		#if (flixel < "5.9.0")
+		#if (flixel < version("5.9.0"))
 		FlxG.inputs.add(controls);
 		#else
 		FlxG.inputs.addInput(controls);
@@ -88,30 +88,30 @@ class Player extends FlxSprite
 
 	function updateDigital():Void
 	{
-		_virtualPad.buttonUp.color = FlxColor.WHITE;
-		_virtualPad.buttonDown.color = FlxColor.WHITE;
-		_virtualPad.buttonLeft.color = FlxColor.WHITE;
-		_virtualPad.buttonRight.color = FlxColor.WHITE;
+		_virtualPad.getButton(UP).color = FlxColor.WHITE;
+		_virtualPad.getButton(DOWN).color = FlxColor.WHITE;
+		_virtualPad.getButton(LEFT).color = FlxColor.WHITE;
+		_virtualPad.getButton(RIGHT).color = FlxColor.WHITE;
 
 		if (controls.pressed.DOWN)
 		{
-			_virtualPad.buttonDown.color = FlxColor.LIME;
+			_virtualPad.getButton(DOWN).color = FlxColor.LIME;
 			moveY = 1;
 		}
 		else if (controls.pressed.UP)
 		{
-			_virtualPad.buttonUp.color = FlxColor.LIME;
+			_virtualPad.getButton(UP).color = FlxColor.LIME;
 			moveY = -1;
 		}
 
 		if (controls.pressed.LEFT)
 		{
-			_virtualPad.buttonLeft.color = FlxColor.LIME;
+			_virtualPad.getButton(LEFT).color = FlxColor.LIME;
 			moveX = -1;
 		}
 		else if (controls.pressed.RIGHT)
 		{
-			_virtualPad.buttonRight.color = FlxColor.LIME;
+			_virtualPad.getButton(RIGHT).color = FlxColor.LIME;
 			moveX = 1;
 		}
 
