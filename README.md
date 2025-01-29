@@ -93,13 +93,18 @@ Simply call `addGroup` to create a new action group, alternatively you can overr
 ### Checking for Group Conflicts
 To get a list of every conflict in the current setup, use the `checkAllGroupConflicts` method, or the `checkGroupConflicts` method for checking a single group. If possible conflicts should be prevented before being added via the `listConflictingActions` or `addIfValid` methods. By design, the `add` method does nothing to prevent conflicts, and the default mappings are not checked for validity, but you can use the compile flag `FlxControls.checkConflictingDefaults` to enable this, meaning conflicts with the default mapping will throw an error at runtime.
 
+### Thanks
+- The FlxControls logo uses [Kenney](https://kenney.nl/)'s [Input Prompts](https://kenney.nl/assets/input-prompts), thanks Kenney!
+- FlxControls is build on top of [FlxActions](https://haxeflixel.com/demos/FlxAction/) and obviously uses Flixel
+
 ## To Dos
-- Schema for saving input mappings
-- Way to disable FlxControl instances
-- Allow custom holdRepeat timings (specifically allow multiple timings to exists at once)
-- Example input remapping UI
-- Add way to disable keyboard and mouse for specific instances of `FlxControls`
-- Add way to get key labels for non-english keyboards
-- Map each `FlxControlMappedInput` to an image in [Kenney's input prompts](https://www.kenney.nl/assets/input-prompts)
+- [Schema for saving input mappings](https://github.com/Geokureli/FlxControls/issues/7)
+- [Way to disable FlxControl instances and specific input devices for specific instances](https://github.com/Geokureli/FlxControls/issues/6)
+- [Allow custom holdRepeat timings (specifically allow multiple timings to exists at once)](https://github.com/Geokureli/FlxControls/issues/8)
+- [Example input remapping UI](https://github.com/Geokureli/FlxControls/issues/9)
+- [Add way to get key labels for non-english keyboards](https://github.com/Geokureli/FlxControls/issues/10)
+- [Map each `FlxControlMappedInput` to an image in Kenney's input prompts](https://github.com/Geokureli/FlxControls/issues/11)
+- [Add custom digital/analog action](https://github.com/Geokureli/FlxControls/issues/3)
+- [Add contextual actions](https://github.com/Geokureli/FlxControls/issues/12)
+- [Input buffering](https://github.com/Geokureli/FlxControls/issues/13)
 - ~~Add groups~~
-- Add custom analog action
