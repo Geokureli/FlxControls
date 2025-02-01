@@ -170,6 +170,7 @@ abstract FlxAnalogSet2DBase<TAction:EnumValue>(FlxAnalogSet<TAction>) to FlxAnal
  * accessed by FlxControls, which offers ways to use the actions in this set.
  */
 @:allow(flixel.addons.input.FlxControls)
+@:allow(flixel.addons.input.FlxAnalogSet1DBase)
 @:allow(flixel.addons.input.FlxAnalogSet2DBase)
 class FlxAnalogSet<TAction:EnumValue>
 {
@@ -418,8 +419,10 @@ class FlxControlAnalog extends FlxActionAnalog
                 @:privateAccess addVPad2D(parent.vPadProxies, up, down, right, left);
             case VirtualPad(Arrows):
                 addInputType(parent, input.simplify());
+            #if (flixel >= version("6.0.0"))
             case VirtualPad(Lone(STICK)):
                 @:privateAccess addVPadStick(parent.vPadStickProxy);
+            #end
             case VirtualPad(Lone(found)):
                 throw 'Internal error - Unexpected VirtualPad($found)';
         }
@@ -477,8 +480,10 @@ class FlxControlAnalog extends FlxActionAnalog
                 removeVPad2D(up, down, right, left);
             case VirtualPad(Arrows):
                 removeVPad2D(UP, DOWN, RIGHT, LEFT);
+            #if (flixel >= version("6.0.0"))
             case VirtualPad(Lone(STICK)):
                 removeVPadStick();
+            #end
             case VirtualPad(Lone(found)):
                 throw 'Internal error - Unexpected VirtualPad(Lone($found))';
         }
@@ -660,10 +665,12 @@ class FlxControlAnalog extends FlxActionAnalog
         add(new Analog2DVPadAction(proxies, this.trigger, up, down, right, left));
     }
     
+    #if (flixel >= version("6.0.0"))
     function addVPadStick(proxy:VirtualPadStickProxy)
     {
         add(new VPadStickAction(proxy, this.trigger));
     }
+    #end
     
     function removeVPad1D(up, down)
     {
@@ -700,6 +707,7 @@ class FlxControlAnalog extends FlxActionAnalog
         }
     }
     
+    #if (flixel >= version("6.0.0"))
     function removeVPadStick()
     {
         for (input in this.inputs)
@@ -708,6 +716,7 @@ class FlxControlAnalog extends FlxActionAnalog
                 this.remove(cast input);
         }
     }
+    #end
     
     public function setGamepadID(id:FlxDeviceID)
     {

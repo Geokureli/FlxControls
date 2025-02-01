@@ -1,6 +1,8 @@
 package flixel.addons.input;
 
+#if (flixel >= version("6.0.0"))
 import flixel.ui.FlxVirtualStick;
+#end
 import flixel.addons.input.FlxAnalogSet;
 import flixel.addons.input.FlxControlInputType;
 import flixel.addons.input.FlxDigitalSet;
@@ -216,8 +218,11 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
     final digitalSets = new Map<DigitalEvent, FlxDigitalSet<TAction>>();
     final analogSets = new Map<TAction, FlxAnalogSet<TAction>>();
     
+    #if (flixel >= version("6.0.0"))
     /** Used internally for FlxVirtualPads */
     final vPadStickProxy = new VirtualPadStickProxy();
+    #end
+    
     /** Used internally for FlxVirtualPads */
     final vPadProxies:VPadMap =
         [ UP   => new VirtualPadInputProxy()
@@ -878,12 +883,14 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
     }
 }
 
+#if (flixel >= version("6.0.0"))
 class VirtualPadStickProxy
 {
     public var target:Null<FlxVirtualStick> = null;
     
     public function new () {}
 }
+#end
 
 private class VirtualPadInputProxy implements IFlxInput
 {

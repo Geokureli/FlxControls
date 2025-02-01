@@ -139,8 +139,10 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
                 | Keyboard(WASD):
                 true;
                 
+            #if (flixel >= version("6.0.0"))
             case VirtualPad(Lone(STICK)):
                 true;
+            #end
             case VirtualPad(Lone(_)):
                 false;
             case VirtualPad(Multi(_, _, _, _))
@@ -181,8 +183,10 @@ abstract FlxControlInputType(FlxControlInputTypeRaw) from FlxControlInputTypeRaw
                 | Keyboard(WASD):
                 false;
                 
+            #if (flixel >= version("6.0.0"))
             case VirtualPad(Lone(STICK)):
                 false;
+            #end
             case VirtualPad(Lone(_)):
                 true;
             case VirtualPad(Multi(_, _, _, _))
@@ -587,5 +591,7 @@ enum abstract FlxVirtualPadInputID(String)
     var C     = "c";
     var X     = "x";
     var Y     = "y";
+    #if (flixel >= version("6.0.0"))
     var STICK = "stick";
+    #end
 }

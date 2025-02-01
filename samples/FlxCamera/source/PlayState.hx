@@ -106,7 +106,7 @@ class PlayState extends FlxState
 		deadzoneOverlay.redraw(FlxG.camera); // now that deadzone is present
 		
 		#if (FLX_DEBUG && FlxControls.dev)
-		player.controls.STYLE.addDebugWatchers();
+		// player.controls.STYLE.addDebugWatchers(); //TODO
 		#end
 	}
 	

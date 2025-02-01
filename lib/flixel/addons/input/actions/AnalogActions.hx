@@ -336,6 +336,7 @@ class Analog2DGamepadAction extends AnalogMultiGamepadAction
     }
 }
 
+#if (flixel >= version("6.0.0"))
 class VPadStickAction extends AnalogAction
 {
     final proxy:VirtualPadStickProxy;
@@ -352,6 +353,7 @@ class VPadStickAction extends AnalogAction
             updateValues(proxy.target.value.x, proxy.target.value.y);
     }
 }
+#end
 
 class AnalogMultiVPadAction extends AnalogAction
 {
