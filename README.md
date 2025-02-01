@@ -9,10 +9,10 @@ Allows you to easily define all possible player actions, whether the action repr
 
 ## Setup
 
-  1. Install flixel-controls (coming soon to haxelib, just github for now).
+  1. Install flixel-controls from haxelib.
      
      Command Line:
-     ```haxelib git flixel-controls http://github.com/Geokureli/FlxControls```
+     ```haxelib install flixel-controls```
   2. Include flixel-controls in your project.xml:  
      
      ```xml
