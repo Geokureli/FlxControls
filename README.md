@@ -32,11 +32,23 @@ controls.released.DOWN
 controls.justReleased.DOWN
 ```
 
-### Hold Repeat Events
-In addition to the typical digital input states, above, there is also a 5th event type called "hold repeat" which behaves similarly to typing. It fires when the action is first pressed, but after 0.5 seconds it will fire every 0.1 seconds. This is common behavior for menu navigation
+### Repeat Events
+In addition to the typical digital input states, above, there is also a 5th event type called "repeat". It is always true when the action is just pressed, but when held it will be true every 0.1 seconds (or whatever interval you decide). This is common behavior for menu navigation.
 ```hx
-// same as controls.checkDigital(DOWN, REPEAT);
-controls.holdRepeat.DOWN
+// true every 0.1s when held
+controls.repeat().DOWN
+
+// true every 0.1s when held
+controls.repeat(0.25).UP
+```
+
+Additionally there's custom `waitAndRepeat` events, which are true when just pressed, and when held for some time, will repeat at some frequency. This behavior is common for text input.
+```hx
+// By defualt, the initial wait is 0.5 seconds and the frequency is 0.1 seconds
+controls.waitAndrepeat().LEFT
+
+// The initial wait is 0.3 seconds and the frequency is 0.15 seconds
+controls.waitAndrepeat(0.30, 0.15).RIGHT
 ```
 
 ## Analog actions
