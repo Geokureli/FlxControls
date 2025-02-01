@@ -100,7 +100,7 @@ To get a list of every conflict in the current setup, use the `checkAllGroupConf
 ## To Dos
 - [Schema for saving input mappings](https://github.com/Geokureli/FlxControls/issues/7)
 - [Way to disable FlxControl instances and specific input devices for specific instances](https://github.com/Geokureli/FlxControls/issues/6)
-- [Allow custom holdRepeat timings (specifically allow multiple timings to exists at once)](https://github.com/Geokureli/FlxControls/issues/8)
+- ~~[Allow custom holdRepeat timings (specifically allow multiple timings to exists at once)](https://github.com/Geokureli/FlxControls/issues/8)~~
 - [Example input remapping UI](https://github.com/Geokureli/FlxControls/issues/9)
 - [Add way to get key labels for non-english keyboards](https://github.com/Geokureli/FlxControls/issues/10)
 - [Map each `FlxControlMappedInput` to an image in Kenney's input prompts](https://github.com/Geokureli/FlxControls/issues/11)
