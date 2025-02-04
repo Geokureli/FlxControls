@@ -494,7 +494,7 @@ abstract class FlxControls<TAction:EnumValue> implements IFlxInputManager
     public function setVirtualPad(pad:FlxVirtualPad)
     {
         virtualPad = pad;
-        #if (flixel <= version("5.9.0"))
+        #if (flixel < version("6.0.0"))
         vPadProxies[FlxVirtualPadInputID.A    ].target = pad.buttonA;
         vPadProxies[FlxVirtualPadInputID.B    ].target = pad.buttonB;
         vPadProxies[FlxVirtualPadInputID.C    ].target = pad.buttonC;
