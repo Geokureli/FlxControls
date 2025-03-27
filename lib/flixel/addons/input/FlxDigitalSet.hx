@@ -1,12 +1,12 @@
 package flixel.addons.input;
 
-import flixel.addons.input.FlxControls;
 import flixel.addons.input.FlxControlInputType;
+import flixel.addons.input.FlxControls;
 import flixel.addons.input.FlxRepeatInput;
 import flixel.input.FlxInput;
 import flixel.input.IFlxInput;
-import flixel.input.actions.FlxActionInput;
 import flixel.input.actions.FlxAction;
+import flixel.input.actions.FlxActionInput;
 import flixel.input.actions.FlxActionInputDigital;
 import flixel.input.actions.FlxActionSet;
 import flixel.input.gamepad.FlxGamepadInputID;
@@ -175,6 +175,10 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
                 this.addGamepad(id, state, parent.gamepadID.toLegacy());
             case Gamepad(found):
                 throw 'Internal error - Unexpected Gamepad($found)';
+            #if (flixel >= version("6.0.0"))
+            case VirtualPad(Lone(STICK)):
+                throw 'Internal error - Unexpected VirtualPad(STICK)';
+            #end
             case VirtualPad(Lone(id)):
                 @:privateAccess
                 this.addInput(parent.vPadProxies[id], state);
@@ -199,10 +203,14 @@ abstract FlxControlDigital(FlxActionDigital) to FlxActionDigital
                 removeGamepad(id);
             case Gamepad(found):
                 throw 'Internal error - Unexpected Gamepad($found)';
+            #if (flixel >= version("6.0.0"))
+            case VirtualPad(Lone(STICK)):
+                throw 'Internal error - Unexpected VirtualPad(STICK)';
+            #end
             case VirtualPad(Lone(id)):
                 removeVirtualPad(parent, id);
             case VirtualPad(found):
-                throw 'Internal error - Unexpected Gamepad($found)';
+                throw 'Internal error - Unexpected VirtualPad($found)';
             case Mouse(Button(id)):
                 removeMouse(id);
             case Mouse(_):

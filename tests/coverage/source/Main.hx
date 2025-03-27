@@ -69,7 +69,7 @@ class BootState extends flixel.FlxState
         @:privateAccess
         final base = displayPad.stick.base;
 		thumb.x = base.x + base.radius - thumb.radius + value.x * (base.radius - thumb.radius);
-		thumb.y = base.y + base.radius - thumb.radius - value.y * (base.radius - thumb.radius);
+		thumb.y = base.y + base.radius - thumb.radius + value.y * (base.radius - thumb.radius);
         
         repeatDPad.setButtonState(DOWN , controls.MOVE.pressed.down , moveRepeat.down );
         repeatDPad.setButtonState(UP   , controls.MOVE.pressed.up   , moveRepeat.up   );

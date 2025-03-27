@@ -1,8 +1,8 @@
 package flixel.addons.input;
 
 import flixel.FlxG;
-import flixel.addons.input.FlxControls;
 import flixel.addons.input.FlxControlInputType;
+import flixel.addons.input.FlxControls;
 import flixel.addons.input.FlxRepeatInput;
 import flixel.addons.input.actions.AnalogActions;
 import flixel.input.actions.FlxAction;
@@ -11,6 +11,7 @@ import flixel.input.actions.FlxActionSet;
 import flixel.input.gamepad.FlxGamepad;
 import flixel.input.gamepad.FlxGamepadInputID;
 import flixel.input.keyboard.FlxKey;
+import flixel.math.FlxPoint;
 import flixel.util.FlxAxes;
 import flixel.util.FlxDirection;
 import flixel.util.FlxDirectionFlags;
@@ -100,10 +101,21 @@ abstract FlxAnalogSet2D<TAction:EnumValue>(FlxAnalogSet2DBase<TAction>) to FlxAn
     inline function get_y():Float { @:privateAccess return this.control.y; }
 }
 
+#if (flixel < version("6.0.0"))
+typedef FlxReadOnlyPoint = FlxPoint;
+#end
+
 @:allow(flixel.addons.input.FlxAnalogDirections2D)
 @:forward
 abstract FlxAnalogSet2DBase<TAction:EnumValue>(FlxAnalogSet<TAction>) to FlxAnalogSet<TAction>
 {
+    /**
+     * Handy `FlxPoint` with the 2d components of this analog action, for use in vector math
+     */
+    
+    public var value(get, never):FlxReadOnlyPoint;
+    inline function get_value() return this.value;
+    
     /**
      * Helper for extracting digital directional states from a 2D analog action.
      * For instance, if the action's `y` is positive, `pressed.up` will be `true`
@@ -183,6 +195,7 @@ class FlxAnalogSet<TAction:EnumValue>
     final released:FlxAnalogDirections2D<TAction>;
     final justReleased:FlxAnalogDirections2D<TAction>;
     final repeaters = new Map<DigitalEvent, FlxAnalogDirections2D<TAction>>();
+    final value = FlxPoint.get();
     
     var upInput = new FlxRepeatInput<FlxDirection>(UP);
     var downInput = new FlxRepeatInput<FlxDirection>(DOWN);
@@ -215,11 +228,14 @@ class FlxAnalogSet<TAction:EnumValue>
         released.destroy();
         justReleased.destroy();
         repeaters.clear();
+        
+        value.put();
     }
     
     function update()
     {
         control.update();
+        value.set(control.x, control.y);
         
         upInput.updateWithState(control.y > 0);
         downInput.updateWithState(control.y < 0);
