@@ -1,16 +1,16 @@
 package flixel.addons.system.macros;
 
 // import flixel.input.FlxInput;
-import haxe.macro.Expr;
 import haxe.macro.Context;
+import haxe.macro.Expr;
 import haxe.macro.Type;
-
 using Lambda;
 using haxe.macro.Tools;
 using haxe.macro.TypeTools;
 
 class FlxControlsMacro
 {
+    #if macro
     public static function buildControls():Array<Field>
     {
         #if (FlxControls.verboseMacroErrors)
@@ -328,11 +328,13 @@ class FlxControlsMacro
             }
         }).fields[0];
     }
+    #end
 }
 
 @:structInit
 class ActionFieldData
 {
+    #if macro
     public var name:String;
     public var path:Array<String>;
     public var actionCT:ComplexType;
@@ -648,6 +650,7 @@ class ActionFieldData
                 throw '$type should be @:enum abstract';
         }
     }
+    #end
 }
 
 enum ActionType
