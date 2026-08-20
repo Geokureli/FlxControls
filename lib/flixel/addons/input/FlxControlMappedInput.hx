@@ -9,6 +9,14 @@ import flixel.addons.input.FlxControlInputType.FlxMouseInputType;
 import flixel.addons.input.FlxControlInputType.FlxVirtualPadInputID;
 import flixel.input.gamepad.FlxGamepad;
 import flixel.input.gamepad.FlxGamepadInputID;
+import flixel.input.gamepad.FlxGamepadInputID.LEFT_STICK_DIGITAL_UP as LS_UP;
+import flixel.input.gamepad.FlxGamepadInputID.LEFT_STICK_DIGITAL_DOWN as LS_DOWN;
+import flixel.input.gamepad.FlxGamepadInputID.LEFT_STICK_DIGITAL_LEFT as LS_LEFT;
+import flixel.input.gamepad.FlxGamepadInputID.LEFT_STICK_DIGITAL_RIGHT as LS_RIGHT;
+import flixel.input.gamepad.FlxGamepadInputID.RIGHT_STICK_DIGITAL_UP as RS_UP;
+import flixel.input.gamepad.FlxGamepadInputID.RIGHT_STICK_DIGITAL_DOWN as RS_DOWN;
+import flixel.input.gamepad.FlxGamepadInputID.RIGHT_STICK_DIGITAL_LEFT as RS_LEFT;
+import flixel.input.gamepad.FlxGamepadInputID.RIGHT_STICK_DIGITAL_RIGHT as RS_RIGHT;
 import flixel.input.gamepad.FlxGamepadMappedInput;
 import flixel.input.keyboard.FlxKey;
 
@@ -51,69 +59,48 @@ class FlxControlMappedInputTools
                 : UNKNOWN(id);
         }
         
+        inline function gPadMulti(up, down, right, left)
+        {
+            return Multi([gPad(up), gPad(down), gPad(right), gPad(left)]);
+        }
+        
         function key(id:FlxKey)
         {
             // TODO: find the label of this key (in international keyboards
             return id.toString();
         }
         
+        inline function keyMulti(up, down, right, left)
+        {
+            return Multi([key(up), key(down), key(right), key(left)]);
+        }
+        
         return switch input
         {
             // Gamepad
-            case GamepadControl(Lone(id)):
-                Gamepad(Lone(gPad(id)));
-            case GamepadControl(Multi(up, down, null, null)):
-                Gamepad(Multi([gPad(up), gPad(down)]));
-            case GamepadControl(Multi(up, down, right, left)):
-                Gamepad(Multi([gPad(up), gPad(down), gPad(right), gPad(left)]));
-            case GamepadControl(DPad):
-                Gamepad(Multi([gPad(DPAD_UP), gPad(DPAD_DOWN), gPad(DPAD_RIGHT), gPad(DPAD_LEFT)]));
-            case GamepadControl(Face):
-                Gamepad(Multi([gPad(Y), gPad(A), gPad(B), gPad(X)]));
-            case GamepadControl(LeftStickDigital):
-                Gamepad(Multi([gPad(LEFT_STICK_DIGITAL_UP), gPad(LEFT_STICK_DIGITAL_DOWN), gPad(LEFT_STICK_DIGITAL_RIGHT), gPad(LEFT_STICK_DIGITAL_LEFT)]));
-            case GamepadControl(RightStickDigital):
-                Gamepad(Multi([gPad(RIGHT_STICK_DIGITAL_UP), gPad(RIGHT_STICK_DIGITAL_DOWN), gPad(RIGHT_STICK_DIGITAL_RIGHT), gPad(RIGHT_STICK_DIGITAL_LEFT)]));
+            case GamepadControl(Lone(id))         : Gamepad(Lone(gPad(id)));
+            case GamepadControl(DPad)             : Gamepad(gPadMulti(DPAD_UP, DPAD_DOWN, DPAD_RIGHT, DPAD_LEFT));
+            case GamepadControl(Face)             : Gamepad(gPadMulti(Y, A, B, X));
+            case GamepadControl(LeftStickDigital) : Gamepad(gPadMulti(LS_UP, LS_DOWN, LS_RIGHT, LS_LEFT));
+            case GamepadControl(RightStickDigital): Gamepad(gPadMulti(RS_UP, RS_DOWN, RS_RIGHT, RS_LEFT));
+            case GamepadControl(Multi(up, down, null, null)) : Gamepad(Multi([gPad(up), gPad(down)]));
+            case GamepadControl(Multi(up, down, right, left)): Gamepad(gPadMulti(up, down, right, left));
             
             // Keyboard
-            case KeyboardControl(Lone(id)):
-                Keyboard(Lone(key(id)));
-            case KeyboardControl(Multi(up, down, null, null)):
-                Keyboard(Multi([key(up), key(down)]));
-            case KeyboardControl(Multi(up, down, right, left)):
-                Keyboard(Multi([key(up), key(down), key(right), key(left)]));
-            case KeyboardControl(WASD):
-                Keyboard(Multi([key(W), key(S), key(A), key(LEFT)]));
-            case KeyboardControl(Arrows):
-                Keyboard(Multi([key(UP), key(DOWN), key(RIGHT), key(LEFT)]));
+            case KeyboardControl(Lone(id)): Keyboard(Lone(key(id)));
+            case KeyboardControl(WASD)    : Keyboard(keyMulti(W, S, A, LEFT));
+            case KeyboardControl(Arrows)  : Keyboard(keyMulti(UP, DOWN, RIGHT, LEFT));
+            case KeyboardControl(Multi(up, down, null, null)) : Keyboard(Multi([key(up), key(down)]));
+            case KeyboardControl(Multi(up, down, right, left)): Keyboard(keyMulti(up, down, right, left));
             
             // Virtual Pad
-            case VirtualPadControl(Lone(id)):
-                VirtualPad(Lone(id));
-            case VirtualPadControl(Multi(up, down, null, null)):
-                VirtualPad(Multi([up, down]));
-            case VirtualPadControl(Multi(up, down, right, left)):
-                VirtualPad(Multi([up, down, right, left]));
-            case VirtualPadControl(Arrows):
-                VirtualPad(Multi([UP, DOWN, RIGHT, LEFT]));
+            case VirtualPadControl(Lone(id)): VirtualPad(Lone(id));
+            case VirtualPadControl(Arrows)  : VirtualPad(Multi([UP, DOWN, RIGHT, LEFT]));
+            case VirtualPadControl(Multi(up, down, null, null)) : VirtualPad(Multi([up, down]));
+            case VirtualPadControl(Multi(up, down, right, left)): VirtualPad(Multi([up, down, right, left]));
             
             // Mouse
-            case MouseControl(Button(LEFT)):
-                Mouse(Button(LEFT));
-            case MouseControl(Button(RIGHT)):
-                Mouse(Button(RIGHT));
-            case MouseControl(Button(MIDDLE)):
-                Mouse(Button(MIDDLE));
-            case MouseControl(Position(axis)):
-                Mouse(Position(axis));
-            case MouseControl(Motion(axis, scale, deadzone, invert)):
-                Mouse(Motion(axis, scale, deadzone, invert));
-            case MouseControl(Drag(id, axis, scale, deadzone, invert)):
-                Mouse(Drag(id, axis, scale, deadzone, invert));
-            case MouseControl(Wheel(scale)):
-                Mouse(Wheel(scale));
-            default:
-                throw 'Internal error - Unexpexpected input: "$input"';
+            case MouseControl(input): Mouse(input);
         }
     }
 }
