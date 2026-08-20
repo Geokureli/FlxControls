@@ -112,6 +112,8 @@ class FlxControlMappedInputTools
                 Mouse(Drag(id, axis, scale, deadzone, invert));
             case MouseControl(Wheel(scale)):
                 Mouse(Wheel(scale));
+            default:
+                throw 'Internal error - Unexpexpected input: "$input"';
         }
     }
 }
