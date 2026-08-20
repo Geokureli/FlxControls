@@ -1,6 +1,12 @@
 package flixel.addons.input;
 
-import flixel.addons.input.FlxControlInputType;
+import flixel.addons.input.FlxControlInputType.FlxControlInputTypeRaw.Gamepad as GamepadControl;
+import flixel.addons.input.FlxControlInputType.FlxControlInputTypeRaw.Keyboard as KeyboardControl;
+import flixel.addons.input.FlxControlInputType.FlxControlInputTypeRaw.Mouse as MouseControl;
+import flixel.addons.input.FlxControlInputType.FlxControlInputTypeRaw.VirtualPad as VirtualPadControl;
+import flixel.addons.input.FlxControlInputType.FlxGamepadInputType;
+import flixel.addons.input.FlxControlInputType.FlxMouseInputType;
+import flixel.addons.input.FlxControlInputType.FlxVirtualPadInputID;
 import flixel.input.gamepad.FlxGamepad;
 import flixel.input.gamepad.FlxGamepadInputID;
 import flixel.input.gamepad.FlxGamepadMappedInput;
@@ -54,54 +60,58 @@ class FlxControlMappedInputTools
         return switch input
         {
             // Gamepad
-            case FlxControlInputTypeRaw.Gamepad(Lone(id)):
-                FlxControlMappedInput.Gamepad(FlxMappedInputType.Lone(gPad(id)));
-            case FlxControlInputTypeRaw.Gamepad(Multi(up, down, null, null)):
-                FlxControlMappedInput.Gamepad(FlxMappedInputType.Multi([gPad(up), gPad(down)]));
-            case FlxControlInputTypeRaw.Gamepad(Multi(up, down, right, left)):
-                FlxControlMappedInput.Gamepad(FlxMappedInputType.Multi([gPad(up), gPad(down), gPad(right), gPad(left)]));
-            case FlxControlInputTypeRaw.Gamepad(DPad):
-                FlxControlMappedInput.Gamepad(FlxMappedInputType.Multi([gPad(DPAD_UP), gPad(DPAD_DOWN), gPad(DPAD_RIGHT), gPad(DPAD_LEFT)]));
-            case FlxControlInputTypeRaw.Gamepad(Face):
-                FlxControlMappedInput.Gamepad(FlxMappedInputType.Multi([gPad(Y), gPad(A), gPad(B), gPad(X)]));
+            case GamepadControl(Lone(id)):
+                Gamepad(Lone(gPad(id)));
+            case GamepadControl(Multi(up, down, null, null)):
+                Gamepad(Multi([gPad(up), gPad(down)]));
+            case GamepadControl(Multi(up, down, right, left)):
+                Gamepad(Multi([gPad(up), gPad(down), gPad(right), gPad(left)]));
+            case GamepadControl(DPad):
+                Gamepad(Multi([gPad(DPAD_UP), gPad(DPAD_DOWN), gPad(DPAD_RIGHT), gPad(DPAD_LEFT)]));
+            case GamepadControl(Face):
+                Gamepad(Multi([gPad(Y), gPad(A), gPad(B), gPad(X)]));
+            case GamepadControl(LeftStickDigital):
+                Gamepad(Multi([gPad(LEFT_STICK_DIGITAL_UP), gPad(LEFT_STICK_DIGITAL_DOWN), gPad(LEFT_STICK_DIGITAL_RIGHT), gPad(LEFT_STICK_DIGITAL_LEFT)]));
+            case GamepadControl(RightStickDigital):
+                Gamepad(Multi([gPad(RIGHT_STICK_DIGITAL_UP), gPad(RIGHT_STICK_DIGITAL_DOWN), gPad(RIGHT_STICK_DIGITAL_RIGHT), gPad(RIGHT_STICK_DIGITAL_LEFT)]));
             
             // Keyboard
-            case FlxControlInputTypeRaw.Keyboard(Lone(id)):
-                FlxControlMappedInput.Keyboard(FlxMappedInputType.Lone(key(id)));
-            case FlxControlInputTypeRaw.Keyboard(Multi(up, down, null, null)):
-                FlxControlMappedInput.Keyboard(FlxMappedInputType.Multi([key(up), key(down)]));
-            case FlxControlInputTypeRaw.Keyboard(Multi(up, down, right, left)):
-                FlxControlMappedInput.Keyboard(FlxMappedInputType.Multi([key(up), key(down), key(right), key(left)]));
-            case FlxControlInputTypeRaw.Keyboard(WASD):
-                FlxControlMappedInput.Keyboard(FlxMappedInputType.Multi([key(W), key(S), key(A), key(LEFT)]));
-            case FlxControlInputTypeRaw.Keyboard(Arrows):
-                FlxControlMappedInput.Keyboard(FlxMappedInputType.Multi([key(UP), key(DOWN), key(RIGHT), key(LEFT)]));
+            case KeyboardControl(Lone(id)):
+                Keyboard(Lone(key(id)));
+            case KeyboardControl(Multi(up, down, null, null)):
+                Keyboard(Multi([key(up), key(down)]));
+            case KeyboardControl(Multi(up, down, right, left)):
+                Keyboard(Multi([key(up), key(down), key(right), key(left)]));
+            case KeyboardControl(WASD):
+                Keyboard(Multi([key(W), key(S), key(A), key(LEFT)]));
+            case KeyboardControl(Arrows):
+                Keyboard(Multi([key(UP), key(DOWN), key(RIGHT), key(LEFT)]));
             
             // Virtual Pad
-            case FlxControlInputTypeRaw.VirtualPad(Lone(id)):
-                FlxControlMappedInput.VirtualPad(FlxMappedInputType.Lone(id));
-            case FlxControlInputTypeRaw.VirtualPad(Multi(up, down, null, null)):
-                FlxControlMappedInput.VirtualPad(FlxMappedInputType.Multi([up, down]));
-            case FlxControlInputTypeRaw.VirtualPad(Multi(up, down, right, left)):
-                FlxControlMappedInput.VirtualPad(FlxMappedInputType.Multi([up, down, right, left]));
-            case FlxControlInputTypeRaw.VirtualPad(Arrows):
-                FlxControlMappedInput.VirtualPad(FlxMappedInputType.Multi([UP, DOWN, RIGHT, LEFT]));
+            case VirtualPadControl(Lone(id)):
+                VirtualPad(Lone(id));
+            case VirtualPadControl(Multi(up, down, null, null)):
+                VirtualPad(Multi([up, down]));
+            case VirtualPadControl(Multi(up, down, right, left)):
+                VirtualPad(Multi([up, down, right, left]));
+            case VirtualPadControl(Arrows):
+                VirtualPad(Multi([UP, DOWN, RIGHT, LEFT]));
             
             // Mouse
-            case FlxControlInputTypeRaw.Mouse(Button(LEFT)):
-                FlxControlMappedInput.Mouse(Button(LEFT));
-            case FlxControlInputTypeRaw.Mouse(Button(RIGHT)):
-                FlxControlMappedInput.Mouse(Button(RIGHT));
-            case FlxControlInputTypeRaw.Mouse(Button(MIDDLE)):
-                FlxControlMappedInput.Mouse(Button(MIDDLE));
-            case FlxControlInputTypeRaw.Mouse(Position(axis)):
-                FlxControlMappedInput.Mouse(Position(axis));
-            case FlxControlInputTypeRaw.Mouse(Motion(axis, scale, deadzone, invert)):
-                FlxControlMappedInput.Mouse(Motion(axis, scale, deadzone, invert));
-            case FlxControlInputTypeRaw.Mouse(Drag(id, axis, scale, deadzone, invert)):
-                FlxControlMappedInput.Mouse(Drag(id, axis, scale, deadzone, invert));
-            default:
-                throw 'Internal Error - unexpected input:"$input"';
+            case MouseControl(Button(LEFT)):
+                Mouse(Button(LEFT));
+            case MouseControl(Button(RIGHT)):
+                Mouse(Button(RIGHT));
+            case MouseControl(Button(MIDDLE)):
+                Mouse(Button(MIDDLE));
+            case MouseControl(Position(axis)):
+                Mouse(Position(axis));
+            case MouseControl(Motion(axis, scale, deadzone, invert)):
+                Mouse(Motion(axis, scale, deadzone, invert));
+            case MouseControl(Drag(id, axis, scale, deadzone, invert)):
+                Mouse(Drag(id, axis, scale, deadzone, invert));
+            case MouseControl(Wheel(scale)):
+                Mouse(Wheel(scale));
         }
     }
 }
